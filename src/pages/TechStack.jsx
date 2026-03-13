@@ -7,7 +7,7 @@ export default function TechStack() {
       {/* Top Section: The Tools We Used */}
       <h1 className="text-4xl font-bold text-green-700 mb-6 text-center">How We Built This</h1>
       <p className="text-lg text-gray-700 mb-12 text-center">
-        A look under the hood at the technologies and tools used to bring ShareByte to life.
+        A look under the hood at the technologies and tools used to bring ShareBite to life.
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">

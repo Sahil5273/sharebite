@@ -9,8 +9,8 @@ export default function FAQ() {
 
   const faqs = [
     {
-      question: "Is ShareByte free to use?",
-      answer: "Yes! ShareByte is a 100% free platform created to help the community. We believe fighting hunger shouldn't cost a thing."
+      question: "Is ShareBite free to use?",
+      answer: "Yes! ShareBite is a 100% free platform created to help the community. We believe fighting hunger shouldn't cost a thing."
     },
     {
       question: "What kind of food can I donate?",
@@ -39,7 +39,7 @@ export default function FAQ() {
     <div className="max-w-3xl mx-auto mt-12 px-4 pb-20">
       <div className="text-center mb-12">
         <h1 className="text-4xl font-extrabold text-green-700 mb-4">Frequently Asked Questions</h1>
-        <p className="text-xl text-gray-600">Everything you need to know about how ShareByte works.</p>
+        <p className="text-xl text-gray-600">Everything you need to know about how ShareBite works.</p>
       </div>
       
       <div className="space-y-4">

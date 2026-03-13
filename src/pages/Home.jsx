@@ -17,7 +17,7 @@ export default function Home() {
           </h1>
           
           <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-            ShareByte bridges the gap between extra food and empty plates. 
+            ShareBite bridges the gap between extra food and empty plates. 
             Join our community to donate your surplus food or find meals for those in need.
           </p>
           

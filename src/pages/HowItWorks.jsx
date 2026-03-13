@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 export default function HowItWorks() {
   return (
     <div className="max-w-6xl mx-auto mt-12 px-4 pb-20 text-center">
-      <h1 className="text-4xl md:text-5xl font-extrabold text-green-700 mb-6">How ShareByte Works</h1>
+      <h1 className="text-4xl md:text-5xl font-extrabold text-green-700 mb-6">How ShareBite Works</h1>
       <p className="text-xl text-gray-600 mb-16 max-w-2xl mx-auto">
         We have made the donation process as simple as possible. Three easy steps to turn your surplus food into someone's meal.
       </p>

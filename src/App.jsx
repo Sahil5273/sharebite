@@ -48,7 +48,7 @@ export default function App() {
           <div className="flex justify-between items-center">
             
             {/* Logo */}
-            <Link to="/" className="text-xl font-bold">ShareByte 🍲</Link>
+            <Link to="/" className="text-xl font-bold">ShareBite 🍲</Link>
 
             {/* Desktop Links (These hide on small phones!) */}
             <div className="hidden md:flex gap-6 items-center">
