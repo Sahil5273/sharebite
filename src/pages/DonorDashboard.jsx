@@ -1,89 +1,168 @@
 // src/pages/DonorDashboard.jsx
 import { useState, useEffect } from 'react';
-import { collection, addDoc, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import { db, auth } from '../firebase/config';
+import { collection, query, where, onSnapshot, addDoc } from 'firebase/firestore';
+import toast from 'react-hot-toast';
 
-export default function DonorDashboard({ user }) {
-  const [donations, setDonations] = useState([]);
-  const [requests, setRequests] = useState([]);
-  const [form, setForm] = useState({ title: '', description: '', quantity: '', address: '', expiryTime: '', contactNumber: '' });
+export default function DonorDashboard() {
+  const [myDonations, setMyDonations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false); 
+  
+  const [formData, setFormData] = useState({
+    foodName: '',
+    quantity: '',
+    foodType: 'Fresh Produce',
+    address: '',
+    phoneNumber: '' 
+  });
 
-  // Load the donor's food and any requests people made for it
-  const loadData = async () => {
+  useEffect(() => {
+    const user = auth.currentUser;
     if (!user) return;
-    
-    // Get Donations
-    const qDonations = query(collection(db, 'donations'), where('donorId', '==', user.uid));
-    const docs = await getDocs(qDonations);
-    setDonations(docs.docs.map(d => ({ id: d.id, ...d.data() })));
 
-    // Get Requests
-    const qRequests = query(collection(db, 'requests'), where('donorId', '==', user.uid), where('status', '==', 'pending'));
-    const reqDocs = await getDocs(qRequests);
-    setRequests(reqDocs.docs.map(d => ({ id: d.id, ...d.data() })));
-  };
-
-  useEffect(() => { loadData(); }, [user]);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    await addDoc(collection(db, 'donations'), {
-      ...form,
-      donorId: user.uid,
-      status: 'available',
-      createdAt: new Date()
+    const q = query(collection(db, "donations"), where("donorId", "==", user.uid));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setMyDonations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setLoading(false);
     });
-    setForm({ title: '', description: '', quantity: '', address: '', expiryTime: '', contactNumber: '' });
-    loadData();
+
+    return () => unsubscribe();
+  }, []);
+
+  const handlePostFood = async (e) => {
+    e.preventDefault(); 
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const loadingToast = toast.loading("Posting food...");
+    
+    try {
+      await addDoc(collection(db, "donations"), {
+        foodName: formData.foodName,
+        quantity: formData.quantity,
+        foodType: formData.foodType,
+        address: formData.address,
+        phoneNumber: formData.phoneNumber, 
+        donorId: user.uid,
+        status: "available",
+        createdAt: new Date().toISOString()
+      });
+      
+      toast.success("Food posted successfully!", { id: loadingToast });
+      setShowForm(false); 
+      setFormData({ foodName: '', quantity: '', foodType: 'Fresh Produce', address: '', phoneNumber: '' }); 
+    } catch (error) {
+      toast.error("Failed to post food.", { id: loadingToast });
+    }
   };
 
-  const handleRequest = async (requestId, donationId, action) => {
-    // Action is either 'accepted' or 'rejected'
-    await updateDoc(doc(db, 'requests', requestId), { status: action });
-    if (action === 'accepted') {
-      await updateDoc(doc(db, 'donations', donationId), { status: 'reserved' });
-    }
-    loadData();
-  };
+  if (loading) return <div className="p-10 text-center text-xl">Loading your donations...</div>;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      {/* Form to add food */}
-      <div className="bg-white p-6 rounded shadow">
-        <h2 className="text-2xl font-bold mb-4">Post Extra Food</h2>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <input required placeholder="Food Title (e.g., 50 Sandwiches)" value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="border p-2 rounded" />
-          <textarea required placeholder="Description" value={form.description} onChange={e => setForm({...form, description: e.target.value})} className="border p-2 rounded" />
-          <input required placeholder="Quantity (e.g., 5 kg)" value={form.quantity} onChange={e => setForm({...form, quantity: e.target.value})} className="border p-2 rounded" />
-          <input required placeholder="Pickup Address" value={form.address} onChange={e => setForm({...form, address: e.target.value})} className="border p-2 rounded" />
-          <input required type="datetime-local" value={form.expiryTime} onChange={e => setForm({...form, expiryTime: e.target.value})} className="border p-2 rounded" />
-          <input required placeholder="Contact Number" value={form.contactNumber} onChange={e => setForm({...form, contactNumber: e.target.value})} className="border p-2 rounded" />
-          <button type="submit" className="bg-green-600 text-white p-2 rounded mt-2">Post Food</button>
-        </form>
+    <div className="max-w-6xl mx-auto mt-10 px-4 pb-20">
+      
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-800">My Food Donations</h1>
+        <button 
+          onClick={() => setShowForm(!showForm)} 
+          className="bg-green-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-green-700 transition"
+        >
+          {showForm ? "Cancel" : "+ Post Extra Food"}
+        </button>
       </div>
 
-      <div>
-        {/* List of requests */}
-        <h2 className="text-2xl font-bold mb-4">Incoming Requests</h2>
-        {requests.length === 0 ? <p>No pending requests.</p> : requests.map(req => (
-          <div key={req.id} className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 rounded shadow">
-            <p>Someone wants to pick up your food!</p>
-            <div className="mt-2 flex gap-2">
-              <button onClick={() => handleRequest(req.id, req.donationId, 'accepted')} className="bg-green-500 text-white px-3 py-1 rounded">Accept</button>
-              <button onClick={() => handleRequest(req.id, req.donationId, 'rejected')} className="bg-red-500 text-white px-3 py-1 rounded">Reject</button>
+      {showForm && (
+        <form onSubmit={handlePostFood} className="bg-white p-8 rounded-2xl shadow-lg border border-green-200 mb-10">
+          <h2 className="text-2xl font-bold text-green-800 mb-6">Donate New Food</h2>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-gray-700 font-bold mb-2">Food Title (e.g., 5 Plates of Biryani)</label>
+              <input required type="text" value={formData.foodName} onChange={e => setFormData({...formData, foodName: e.target.value})} className="w-full border p-3 rounded bg-gray-50" placeholder="What are you donating?" />
+            </div>
+            <div>
+              <label className="block text-gray-700 font-bold mb-2">Quantity (Servings/Kg)</label>
+              <input required type="text" value={formData.quantity} onChange={e => setFormData({...formData, quantity: e.target.value})} className="w-full border p-3 rounded bg-gray-50" placeholder="e.g., 10 servings" />
+            </div>
+            <div>
+              <label className="block text-gray-700 font-bold mb-2">Food Type</label>
+              <select value={formData.foodType} onChange={e => setFormData({...formData, foodType: e.target.value})} className="w-full border p-3 rounded bg-gray-50">
+                <option value="Fresh Produce">Fresh Produce</option>
+                <option value="Cooked Meal">Cooked Meal</option>
+                <option value="Packaged Food">Packaged Food</option>
+                <option value="Beverages">Beverages</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-gray-700 font-bold mb-2">Pick-up Address</label>
+              <input required type="text" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full border p-3 rounded bg-gray-50" placeholder="Street, Area, City" />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-gray-700 font-bold mb-2">Your Contact Number</label>
+              <input required type="tel" value={formData.phoneNumber} onChange={e => setFormData({...formData, phoneNumber: e.target.value})} className="w-full border p-3 rounded bg-gray-50" placeholder="Phone Number for the receiver to call you" />
             </div>
           </div>
-        ))}
+          <button type="submit" className="mt-6 w-full bg-green-600 text-white font-bold py-4 rounded-xl hover:bg-green-700 transition text-lg">
+            Post Donation to Live Map
+          </button>
+        </form>
+      )}
 
-        {/* List of their donations */}
-        <h2 className="text-2xl font-bold mt-8 mb-4">Your Postings</h2>
-        {donations.map(don => (
-          <div key={don.id} className="bg-white p-4 mb-3 rounded shadow border">
-            <h3 className="font-bold">{don.title}</h3>
-            <p className="text-sm text-gray-600">Status: <span className="font-semibold">{don.status}</span></p>
-          </div>
-        ))}
-      </div>
+      {myDonations.length === 0 && !showForm ? (
+        <div className="bg-gray-50 p-10 rounded-xl text-center border">
+          <p className="text-gray-600 text-lg">You haven't donated any food yet. Click the button above to start!</p>
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {myDonations.map((food) => (
+            <div key={food.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col">
+              
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-xl font-bold text-gray-800">{food.foodName}</h3>
+                {food.status === 'claimed' ? (
+                  <span className="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full">CLAIMED</span>
+                ) : (
+                  <span className="bg-yellow-100 text-yellow-700 text-xs font-bold px-3 py-1 rounded-full">AVAILABLE</span>
+                )}
+              </div>
+
+              <p className="text-gray-600 mb-1"><strong>Quantity:</strong> {food.quantity}</p>
+              <p className="text-gray-600 mb-1"><strong>My Phone:</strong> {food.phoneNumber}</p> 
+              
+              {/* --- NEW: Upgraded Receiver Details Box --- */}
+              {food.status === 'claimed' && (
+                <div className="mt-auto pt-4">
+                  <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                    <p className="text-xs font-bold text-blue-800 uppercase tracking-wider mb-2 border-b border-blue-200 pb-2">
+                      Who is picking this up?
+                    </p>
+                    <p className="text-blue-900 font-bold text-lg">{food.claimedByName}</p>
+                    
+                    {/* Shows the Org name or 'Self Use' */}
+                    <p className="text-blue-700 text-sm font-semibold mb-2 bg-blue-100 inline-block px-2 py-1 rounded">
+                      {food.claimedByOrg}
+                    </p>
+                    
+                    <p className="text-blue-800 text-sm flex items-center mt-1">
+                      <span className="mr-2">📞</span> {food.claimedByPhone}
+                    </p>
+                    <p className="text-blue-800 text-sm flex items-center mt-1">
+                      <span className="mr-2">🏠</span> {food.claimedByAddress}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {food.status !== 'claimed' && (
+                <div className="mt-auto pt-4 text-sm text-gray-500 text-center bg-gray-50 p-2 rounded-lg">
+                  Waiting for a receiver to claim...
+                </div>
+              )}
+
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

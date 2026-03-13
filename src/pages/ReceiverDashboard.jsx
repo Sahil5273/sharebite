@@ -1,97 +1,190 @@
+// src/pages/ReceiverDashboard.jsx
 import { useState, useEffect } from 'react';
 import { db, auth } from '../firebase/config';
 import { collection, query, where, onSnapshot, doc, runTransaction } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 
 export default function ReceiverDashboard() {
-  const [donations, setDonations] = useState([]);
+  const [availableDonations, setAvailableDonations] = useState([]);
+  const [myClaims, setMyClaims] = useState([]); 
   const [loading, setLoading] = useState(true);
 
+  // --- NEW: Controls the Pop-up Form ---
+  const [claimModalOpen, setClaimModalOpen] = useState(false);
+  const [selectedFood, setSelectedFood] = useState(null); // Remembers which food they clicked
+  const [claimForm, setClaimForm] = useState({
+    name: '',
+    claimType: 'Organization', // Can be 'Organization' or 'Self Use'
+    orgName: '',
+    phone: '',
+    address: ''
+  });
+
   useEffect(() => {
-    // We only want to see food that hasn't been claimed yet
-    const q = query(collection(db, "donations"), where("status", "==", "available"));
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setDonations(docs);
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const qAvailable = query(collection(db, "donations"), where("status", "==", "available"));
+    const unsubAvailable = onSnapshot(qAvailable, (snapshot) => {
+      setAvailableDonations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
+    const qMyClaims = query(collection(db, "donations"), where("claimedBy", "==", user.uid));
+    const unsubMyClaims = onSnapshot(qMyClaims, (snapshot) => {
+      setMyClaims(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => { unsubAvailable(); unsubMyClaims(); };
   }, []);
 
-  const handleClaimFood = async (foodId) => {
-    const user = auth.currentUser;
-    if (!user) {
-      toast.error("You must be logged in to claim food");
-      return;
-    }
+  // Opens the pop-up when they click the first "Claim" button
+  const openClaimForm = (food) => {
+    setSelectedFood(food);
+    setClaimModalOpen(true);
+  };
 
-    const foodDocRef = doc(db, "donations", foodId);
+  // Submits the form and saves everything to Firebase
+  const submitClaim = async (e) => {
+    e.preventDefault(); // Stops page from refreshing
+    const user = auth.currentUser;
+    if (!user) return toast.error("You must be logged in!");
+
+    const loadingToast = toast.loading("Claiming food...");
+    const foodDocRef = doc(db, "donations", selectedFood.id);
 
     try {
-      // --- START OF FIREBASE TRANSACTION ---
-      // This is the "Referee" that prevents two people claiming at once
       await runTransaction(db, async (transaction) => {
         const sfDoc = await transaction.get(foodDocRef);
-        
-        if (!sfDoc.exists()) {
-          throw "Document does not exist!";
-        }
-
-        const currentStatus = sfDoc.data().status;
-
-        // The "Strict Check": If it's not available anymore, stop!
-        if (currentStatus !== "available") {
+        if (sfDoc.data().status !== "available") {
           throw "Too late! Someone else just claimed this meal.";
         }
-
-        // The "Atomic Update": Mark it claimed and link it to this user
+        
+        // Save all the new form details to the database!
         transaction.update(foodDocRef, { 
           status: "claimed",
           claimedBy: user.uid,
-          claimedByName: user.displayName || "NGO Partner"
+          claimedByEmail: user.email,
+          claimedByName: claimForm.name,
+          claimedByOrg: claimForm.claimType === 'Self Use' ? 'Self Use' : claimForm.orgName,
+          claimedByPhone: claimForm.phone,
+          claimedByAddress: claimForm.address
         });
       });
-      // --- END OF TRANSACTION ---
-
-      toast.success("Success! You have claimed this donation.");
+      
+      toast.success("Success! You have claimed this donation.", { id: loadingToast });
+      
+      // Close the pop-up and clear the form
+      setClaimModalOpen(false);
+      setClaimForm({ name: '', claimType: 'Organization', orgName: '', phone: '', address: '' });
     } catch (error) {
-      console.error("Transaction failed: ", error);
-      toast.error(error.toString());
+      toast.error(error.toString(), { id: loadingToast });
     }
   };
 
-  if (loading) return <div className="p-10 text-center">Loading available food...</div>;
+  if (loading) return <div className="p-10 text-center text-xl">Loading dashboard...</div>;
 
   return (
-    <div className="max-w-6xl mx-auto mt-10 px-4">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">Available Food Donations</h1>
+    <div className="max-w-6xl mx-auto mt-10 px-4 pb-20 relative">
       
-      {donations.length === 0 ? (
-        <div className="bg-gray-100 p-10 rounded-xl text-center">
-          <p className="text-gray-600 text-lg">No food available in your area right now. Check back soon!</p>
+      {/* --- POP-UP MODAL (Only shows when claimModalOpen is true) --- */}
+      {claimModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <h2 className="text-2xl font-bold text-green-800 mb-2">Claim Confirmation</h2>
+            <p className="text-gray-600 mb-6">You are claiming: <strong>{selectedFood?.foodName}</strong></p>
+            
+            <form onSubmit={submitClaim} className="flex flex-col gap-4">
+              <div>
+                <label className="block text-gray-700 font-bold mb-2">Your Full Name</label>
+                <input required type="text" value={claimForm.name} onChange={e => setClaimForm({...claimForm, name: e.target.value})} className="w-full border p-3 rounded bg-gray-50" placeholder="John Doe" />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-bold mb-2">I am claiming this for:</label>
+                <select value={claimForm.claimType} onChange={e => setClaimForm({...claimForm, claimType: e.target.value})} className="w-full border p-3 rounded bg-gray-50">
+                  <option value="Organization">An Organization / NGO</option>
+                  <option value="Self Use">Self Use / Individual</option>
+                </select>
+              </div>
+
+              {/* Only show the Org Name box if they selected "Organization" */}
+              {claimForm.claimType === 'Organization' && (
+                <div>
+                  <label className="block text-gray-700 font-bold mb-2">Organization Name</label>
+                  <input required type="text" value={claimForm.orgName} onChange={e => setClaimForm({...claimForm, orgName: e.target.value})} className="w-full border p-3 rounded bg-gray-50" placeholder="e.g., Hope Shelter" />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-gray-700 font-bold mb-2">Your Phone Number</label>
+                <input required type="tel" value={claimForm.phone} onChange={e => setClaimForm({...claimForm, phone: e.target.value})} className="w-full border p-3 rounded bg-gray-50" placeholder="So the donor can contact you" />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-bold mb-2">Your Office/Home Address</label>
+                <input required type="text" value={claimForm.address} onChange={e => setClaimForm({...claimForm, address: e.target.value})} className="w-full border p-3 rounded bg-gray-50" placeholder="Where are you coming from?" />
+              </div>
+
+              <div className="flex gap-4 mt-4">
+                <button type="button" onClick={() => setClaimModalOpen(false)} className="w-1/3 bg-gray-200 text-gray-800 font-bold py-3 rounded-xl hover:bg-gray-300">
+                  Cancel
+                </button>
+                <button type="submit" className="w-2/3 bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700">
+                  Confirm & Claim Food
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* --- END POP-UP MODAL --- */}
+
+      {/* SECTION 1: Available Food */}
+      <h1 className="text-3xl font-bold text-gray-800 mb-6">Available Food Donations</h1>
+      {availableDonations.length === 0 ? (
+        <div className="bg-gray-50 p-6 rounded-xl text-center mb-12 border">
+          <p className="text-gray-600">No food available right now. Check back soon!</p>
         </div>
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {donations.map((food) => (
-            <div key={food.id} className="bg-white p-6 rounded-2xl shadow-md border border-gray-100 flex flex-col">
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-xl font-bold text-green-700">{food.foodName}</h3>
-                <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded uppercase">
-                  {food.foodType || 'Meal'}
-                </span>
-              </div>
-              
-              <p className="text-gray-600 mb-2"><strong>Quantity:</strong> {food.quantity} servings</p>
-              <p className="text-gray-600 mb-4"><strong>Address:</strong> {food.address}</p>
-              
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          {availableDonations.map((food) => (
+            <div key={food.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col">
+              <h3 className="text-xl font-bold text-green-700 mb-2">{food.foodName}</h3>
+              <p className="text-gray-600 mb-1"><strong>Quantity:</strong> {food.quantity}</p>
+              <p className="text-gray-600 mb-1"><strong>Address:</strong> {food.address}</p>
+              <p className="text-gray-600 mb-4"><strong>Donor Phone:</strong> {food.phoneNumber}</p>
               <button 
-                onClick={() => handleClaimFood(food.id)}
-                className="mt-auto bg-green-600 text-white font-bold py-2 rounded-xl hover:bg-green-700 transition-colors"
+                onClick={() => openClaimForm(food)}
+                className="mt-auto bg-green-600 text-white font-bold py-2 rounded-xl hover:bg-green-700 transition"
               >
                 Claim This Food
               </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* SECTION 2: Food I Have Claimed */}
+      <h2 className="text-3xl font-bold text-gray-800 mb-6 border-t pt-10">Food I Have Claimed</h2>
+      {myClaims.length === 0 ? (
+        <div className="bg-gray-50 p-6 rounded-xl text-center border">
+          <p className="text-gray-600">You haven't claimed any food yet.</p>
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {myClaims.map((food) => (
+            <div key={food.id} className="bg-green-50 p-6 rounded-2xl shadow-sm border border-green-200 flex flex-col">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-xl font-bold text-green-800">{food.foodName}</h3>
+                <span className="bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full">CLAIMED</span>
+              </div>
+              <p className="text-gray-700 mb-1"><strong>Quantity:</strong> {food.quantity}</p>
+              <p className="text-gray-700 mb-1"><strong>Pickup Address:</strong> {food.address}</p>
+              <p className="text-gray-700 mb-4"><strong>Donor Phone:</strong> {food.phoneNumber}</p>
+              <p className="text-sm text-green-700 mt-auto bg-green-100 p-3 rounded-lg text-center font-bold">
+                Please contact the donor and pick up your food!
+              </p>
             </div>
           ))}
         </div>
