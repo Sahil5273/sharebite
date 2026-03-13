@@ -12,7 +12,8 @@ import FAQ from './pages/FAQ';
 import ContactUs from './pages/ContactUs';
 import DonorDashboard from './pages/DonorDashboard';
 import ReceiverDashboard from './pages/ReceiverDashboard';
-import About from './pages/About'; // <-- Add this new line!
+import About from './pages/About'; 
+import TechStack from './pages/TechStack';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -55,6 +56,7 @@ export default function App() {
               <Link to="/how-it-works" className="hover:text-green-200">How it Works</Link>
               <Link to="/faq" className="hover:text-green-200">FAQ</Link>
               <Link to="/contact" className="hover:text-green-200">Contact</Link>
+              <Link to="/tech" className="hover:text-green-200">Tech Stack</Link>
               
               {user ? (
                 <div className="flex gap-4 items-center ml-4">
@@ -90,6 +92,7 @@ export default function App() {
               <Link to="/how-it-works" onClick={() => setMenuOpen(false)}>How it Works</Link>
               <Link to="/faq" onClick={() => setMenuOpen(false)}>FAQ</Link>
               <Link to="/contact" onClick={() => setMenuOpen(false)}>Contact</Link>
+              <Link to="/tech" onClick={() => setMenuOpen(false)}>Tech Stack</Link>
               
               {user ? (
                 <div className="flex flex-col gap-3 mt-2">
@@ -113,6 +116,7 @@ export default function App() {
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/contact" element={<ContactUs />} />
+            <Route path="/tech" element={<TechStack />} />
             <Route path="/donor" element={<DonorDashboard user={user} />} />
             <Route path="/receiver" element={<ReceiverDashboard user={user} />} />
           </Routes>
