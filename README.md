@@ -1,14 +1,20 @@
+'''
 # ShareBite 🍲
 **A MERN-Firebase Integrated Solution for Surplus Food Redistribution.**
 
 ShareBite is a centralized platform connecting restaurants, grocery stores, and individuals (Donors) with local shelters and NGOs (Recipients). Our mission is to streamline the donation process, making it as easy to donate food as it is to order it, thereby reducing the environmental footprint of food waste while solving local hunger.
 
 ## 🌟 Key Features
-* **Role-Based Dashboards:** Distinct interfaces for Donors to post food and Receivers to claim it.
+* **Role-Based Dashboards:** Distinct interfaces for Donors to post food, Receivers to claim it, and Admins to monitor the platform.
 * **Real-Time Database:** Utilizes Firebase Firestore to update donation requests instantly without refreshing the page.
 * **Secure Authentication:** Seamless Google Sign-In powered by Firebase Authentication.
 * **Mobile-Responsive UI:** Built with Tailwind CSS to ensure the platform works perfectly on both desktops and mobile phones.
-* **Live Metrics:** Dynamic statistics tracking the impact of food sharing in the community.
+
+## ✨ Special Technical Features
+* **Race Condition Prevention:** Uses Firebase Transactions to act like a "strict referee." If two NGOs try to claim the exact same meal at the exact same millisecond, the system safely processes only one request and prevents the meal from being double-booked.
+* **Secure Admin "Bouncer":** Features a hidden Admin Control Center that actively checks a user's logged-in email. If an unauthorized user tries to guess the URL and enter the admin page, they are blocked by an "Access Denied" security screen.
+* **Smart Contact Cards & Modals:** Uses interactive pop-up forms (modals) to collect a receiver's organization name, phone number, and address. This data instantly appears on the Donor's private dashboard so they know exactly who is picking up the food.
+* **Geographical Accuracy Design:** Designed to utilize standardized address formats to ensure pickup locations are precise and easy to find.
 
 ## 🛠️ Technology Stack
 * **Frontend:** React.js (Bootstrapped with Vite)
@@ -53,11 +59,7 @@ firebase deploy
 
 ```
 
-## 👨‍💻 Team Members
+## 👨‍💻 Developer
 
 * Sahil Kumar (23BA110224)
-* Mrityudaman Dhaka (23BCE10164)
-* Vinay Singh (23BCY10336)
-* Aman Kumar (23BCE10302)
-* Lakshyawardhan Singh (23BCE10631)
-* Mohit Thakur (23MIP10009)
+
