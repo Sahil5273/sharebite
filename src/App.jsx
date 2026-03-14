@@ -15,6 +15,8 @@ import DonorDashboard from './pages/DonorDashboard';
 import ReceiverDashboard from './pages/ReceiverDashboard';
 import About from './pages/About'; 
 import TechStack from './pages/TechStack';
+import AdminMessages from './pages/AdminMessages';
+
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -58,8 +60,13 @@ export default function App() {
               <Link to="/faq" className="hover:text-green-200">FAQ</Link>
               <Link to="/contact" className="hover:text-green-200">Contact</Link>
               <Link to="/tech" className="hover:text-green-200">Tech Stack</Link>
-              {user && user.email === 'hostelbitesvitb@gmail.com' && (
-              <Link to="/admin" className="text-orange-300 font-bold hover:text-orange-100"> Admin Panel</Link>)}
+              {/* --- ADMIN ONLY LINKS --- */}
+                {user && ["hostelbitesvitb@gmail.com", "vishalsinghbhati@vitbhopal.ac.in"].includes(user.email) && (
+                  <div className="flex gap-4 items-center bg-gray-800 px-4 py-1 rounded-lg border border-gray-700">
+                  <Link to="/admin" className="text-orange-300 font-bold hover:text-orange-100 text-sm">Live Activity</Link>
+                  <Link to="/messages" className="text-orange-300 font-bold hover:text-orange-100 text-sm">Inbox</Link>
+               </div>
+              )}
               
               {user ? (
                 <div className="flex gap-4 items-center ml-4">
@@ -96,8 +103,13 @@ export default function App() {
               <Link to="/faq" onClick={() => setMenuOpen(false)}>FAQ</Link>
               <Link to="/contact" onClick={() => setMenuOpen(false)}>Contact</Link>
               <Link to="/tech" onClick={() => setMenuOpen(false)}>Tech Stack</Link>
-              {user && user.email === 'hostelbitesvitb@gmail.com' && (
-              <Link to="/admin" className="text-orange-300 font-bold hover:text-orange-100"> Admin Panel</Link>)}
+              {/* --- ADMIN ONLY LINKS --- */}
+                {user && ["hostelbitesvitb@gmail.com", "vishalsinghbhati@vitbhopal.ac.in"].includes(user.email) && (
+                   <div className="flex gap-4 items-center bg-gray-800 px-4 py-1 rounded-lg border border-gray-700">
+                      <Link to="/admin" className="text-orange-300 font-bold hover:text-orange-100 text-sm">Live Activity</Link>
+                      <Link to="/messages" className="text-orange-300 font-bold hover:text-orange-100 text-sm">Inbox</Link>
+                      </div>
+                 )}
               
               {user ? (
                 <div className="flex flex-col gap-3 mt-2">
@@ -125,6 +137,7 @@ export default function App() {
             <Route path="/donor" element={<DonorDashboard user={user} />} />
             <Route path="/receiver" element={<ReceiverDashboard user={user} />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/messages" element={<AdminMessages />} />
           </Routes>
         </div>
       </div>

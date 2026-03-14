@@ -9,9 +9,9 @@ export default function AdminDashboard() {
 
   // --- THE BOUNCER (Security Check) ---
   const user = auth.currentUser;
-  const adminEmail = "hostelbitesvitb@gmail.com"; // Put your exact email here
+  const adminEmail = ["hostelbitesvitb@gmail.com", "vishalsinghbhati@vitbhopal.ac.in"] // Put your exact email here
 
-  if (!user || user.email !== adminEmail) {
+  if (!user || !adminEmail.includes(user.email)) {
     return (
       <div className="max-w-3xl mx-auto mt-20 text-center px-4">
         <div className="text-6xl mb-4">🛑</div>

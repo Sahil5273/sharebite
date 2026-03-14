@@ -67,10 +67,28 @@ export default function About() {
           </div>
         </div>
       </div>
+      
+      {/* --- ADD THE SUPERVISOR SECTION HERE --- */}
+      <div className="bg-blue-50 p-8 rounded-2xl shadow-md border border-blue-100 mb-10">
+        <h2 className="text-3xl font-bold text-blue-900 mb-6 border-b border-blue-200 pb-4 text-center md:text-left">
+          Project Supervisor
+        </h2>
+        <div className="flex flex-col md:flex-row items-center gap-6">
+          <div className="bg-blue-600 text-white w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold shadow-lg">
+            🎓
+          </div>
+          <div className="text-center md:text-left">
+            <h3 className="text-2xl font-bold text-gray-900">Dr. VISHAL SINGH</h3>
+            <p className="text-lg text-blue-800 font-medium">Teaching Fellow, School of Computer Science and Engineering (SCOPE)</p>
+            <p className="text-gray-600">VIT Bhopal University</p>
+          </div>
+        </div>
+      </div>
+      {/* --- END OF SUPERVISOR SECTION --- */}
 
       {/* Meet the Team Section */}
       <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-        <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Meet the Team</h2>
+        <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center"> The Team</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {team.map((member, index) => (
             <div key={index} className="bg-gray-50 p-6 rounded-xl border border-gray-200 text-center hover:shadow-md transition-shadow">
