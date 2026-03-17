@@ -1,25 +1,23 @@
 // src/pages/AdminMessages.jsx
 import { useEffect, useState } from 'react';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+// 1. We added 'doc' and 'deleteDoc' so we can erase messages
+import { collection, query, orderBy, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
 import { db, auth } from '../firebase/config';
 import { superAdmins } from '../adminConfig';
 
-// 1. ADDED { role } HERE so the page knows if they are a database admin
 export default function AdminMessages({ role }) {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState(null);
-
-  // (Deleted the old adminEmails list from here!)
 
   useEffect(() => {
     const q = query(collection(db, 'messages'), orderBy('createdAt', 'desc'));
     
     const unsubscribe = onSnapshot(q, 
       (snapshot) => {
-        const msgList = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
+        const msgList = snapshot.docs.map(document => ({
+          id: document.id,
+          ...document.data()
         }));
         setMessages(msgList);
         setLoading(false);
@@ -34,8 +32,18 @@ export default function AdminMessages({ role }) {
     return () => unsubscribe();
   }, []);
 
-  // 2. UPDATED THE BOUNCER
-  // It now checks the superAdmins list OR the Firebase database role
+  // 2. THE DELETE FUNCTION
+  const handleDelete = async (id) => {
+    // Ask for confirmation first so you don't delete by accident
+    const isSure = window.confirm("Are you sure you want to delete this message forever?");
+    
+    if (isSure) {
+      // This tells Firebase to permanently erase the message
+      await deleteDoc(doc(db, "messages", id));
+    }
+  };
+
+  // --- THE BOUNCER ---
   if (!auth.currentUser || (!superAdmins.includes(auth.currentUser.email) && role !== 'admin')) {
     return (
       <div className="max-w-3xl mx-auto mt-20 text-center px-4">
@@ -58,9 +66,6 @@ export default function AdminMessages({ role }) {
           <p className="text-red-600 font-mono text-sm bg-white p-4 rounded border border-red-100">
             {errorMsg}
           </p>
-          <p className="text-gray-600 mt-4">
-            If the error mentions a <strong>"missing index"</strong>, right-click the page, click "Inspect", go to the "Console" tab, and click the blue link Firebase provided to build the index.
-          </p>
         </div>
       ) : loading ? (
         <p className="text-center text-xl text-gray-600">Loading messages...</p>
@@ -78,10 +83,23 @@ export default function AdminMessages({ role }) {
                   {msg.createdAt ? msg.createdAt.toDate().toLocaleString() : "Just now"}
                 </span>
               </div>
+              
               <p className="text-sm text-blue-600 font-medium mb-4 border-b pb-2">{msg.email}</p>
+              
               <p className="text-gray-700 bg-gray-50 p-4 rounded-lg border border-gray-100">
                 {msg.message}
               </p>
+
+              {/* 3. THE DELETE BUTTON */}
+              <div className="mt-4 flex justify-end">
+                <button 
+                  onClick={() => handleDelete(msg.id)}
+                  className="text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded transition-colors font-bold border border-transparent hover:border-red-200"
+                >
+                  Delete Message
+                </button>
+              </div>
+
             </div>
           ))}
         </div>
