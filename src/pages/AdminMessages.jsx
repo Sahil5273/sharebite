@@ -2,18 +2,19 @@
 import { useEffect, useState } from 'react';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../firebase/config';
+import { superAdmins } from '../adminConfig';
 
-export default function AdminMessages() {
+// 1. ADDED { role } HERE so the page knows if they are a database admin
+export default function AdminMessages({ role }) {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState(null); // --- NEW: Holds the hidden error ---
+  const [errorMsg, setErrorMsg] = useState(null);
 
-  const adminEmails = ["hostelbitesvitb@gmail.com", "vishalsinghbhati@vitbhopal.ac.in"];
+  // (Deleted the old adminEmails list from here!)
 
   useEffect(() => {
     const q = query(collection(db, 'messages'), orderBy('createdAt', 'desc'));
     
-    // We added an error catcher to the onSnapshot listener!
     const unsubscribe = onSnapshot(q, 
       (snapshot) => {
         const msgList = snapshot.docs.map(doc => ({
@@ -24,7 +25,6 @@ export default function AdminMessages() {
         setLoading(false);
       }, 
       (error) => {
-        // If Firebase fails, it will trigger this code instead of being stuck
         console.error("Firebase Error:", error);
         setErrorMsg(error.message);
         setLoading(false);
@@ -34,8 +34,9 @@ export default function AdminMessages() {
     return () => unsubscribe();
   }, []);
 
-  // THE BOUNCER 
-  if (!auth.currentUser || !adminEmails.includes(auth.currentUser.email)) {
+  // 2. UPDATED THE BOUNCER
+  // It now checks the superAdmins list OR the Firebase database role
+  if (!auth.currentUser || (!superAdmins.includes(auth.currentUser.email) && role !== 'admin')) {
     return (
       <div className="max-w-3xl mx-auto mt-20 text-center px-4">
         <div className="text-6xl mb-4">🛑</div>
@@ -51,7 +52,6 @@ export default function AdminMessages() {
     <div className="max-w-4xl mx-auto mt-10 px-4 pb-12">
       <h1 className="text-3xl font-bold text-gray-800 mb-8">User Messages</h1>
 
-      {/* --- NEW: Show the error if one happened --- */}
       {errorMsg ? (
         <div className="bg-red-50 border border-red-200 p-8 rounded-xl text-center">
           <h2 className="text-2xl font-bold text-red-700 mb-2">Firebase Blocked the Request</h2>

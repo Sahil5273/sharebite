@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from './firebase/config';
+import { superAdmins } from './adminConfig';
 
 import Home from './pages/Home';
 import AdminDashboard from './pages/AdminDashboard';
@@ -61,12 +62,13 @@ export default function App() {
               <Link to="/contact" className="hover:text-green-200">Contact</Link>
               <Link to="/tech" className="hover:text-green-200">Tech Stack</Link>
               {/* --- ADMIN ONLY LINKS --- */}
-                {user && ["hostelbitesvitb@gmail.com", "vishalsinghbhati@vitbhopal.ac.in"].includes(user.email) && (
-                  <div className="flex gap-4 items-center bg-gray-800 px-4 py-1 rounded-lg border border-gray-700">
-                  <Link to="/admin" className="text-orange-300 font-bold hover:text-orange-100 text-sm">Live Activity</Link>
-                  <Link to="/messages" className="text-orange-300 font-bold hover:text-orange-100 text-sm">Inbox</Link>
-               </div>
-              )}
+                {/* --- COMBINED SUPER ADMIN & DATABASE ADMIN CHECK --- */}
+                {user && (superAdmins.includes(user.email) || role === 'admin') && (
+                    <div className="flex gap-4 items-center bg-gray-800 px-4 py-1 rounded-lg border border-gray-700">
+                         <Link to="/admin" className="text-orange-300 font-bold hover:text-orange-100 text-sm">Live Activity</Link>
+                        <Link to="/messages" className="text-orange-300 font-bold hover:text-orange-100 text-sm">Inbox</Link>
+                    </div>
+                )}
               
               {user ? (
                 <div className="flex gap-4 items-center ml-4">
@@ -103,13 +105,8 @@ export default function App() {
               <Link to="/faq" onClick={() => setMenuOpen(false)}>FAQ</Link>
               <Link to="/contact" onClick={() => setMenuOpen(false)}>Contact</Link>
               <Link to="/tech" onClick={() => setMenuOpen(false)}>Tech Stack</Link>
-              {/* --- ADMIN ONLY LINKS --- */}
-                {user && ["hostelbitesvitb@gmail.com", "vishalsinghbhati@vitbhopal.ac.in"].includes(user.email) && (
-                   <div className="flex gap-4 items-center bg-gray-800 px-4 py-1 rounded-lg border border-gray-700">
-                      <Link to="/admin" className="text-orange-300 font-bold hover:text-orange-100 text-sm">Live Activity</Link>
-                      <Link to="/messages" className="text-orange-300 font-bold hover:text-orange-100 text-sm">Inbox</Link>
-                      </div>
-                 )}
+              <Route path="/admin" element={<AdminDashboard role={role} />} />
+              <Route path="/messages" element={<AdminMessages role={role} />} />
               
               {user ? (
                 <div className="flex flex-col gap-3 mt-2">
@@ -136,8 +133,8 @@ export default function App() {
             <Route path="/tech" element={<TechStack />} />
             <Route path="/donor" element={<DonorDashboard user={user} />} />
             <Route path="/receiver" element={<ReceiverDashboard user={user} />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/messages" element={<AdminMessages />} />
+            <Route path="/admin" element={<AdminDashboard role={role} />} />
+            <Route path="/messages" element={<AdminMessages role={role} />} />
           </Routes>
         </div>
       </div>
