@@ -1,11 +1,27 @@
 // src/pages/ContactUs.jsx
-import { useState } from 'react';
+// 1. ADDED useEffect to the React imports
+import { useState, useEffect } from 'react';
 import { collection, addDoc } from 'firebase/firestore';
-import { db } from '../firebase/config';
+// 2. ADDED 'auth' to the Firebase imports
+import { db, auth } from '../firebase/config';
 import toast from 'react-hot-toast';
 
 export default function ContactUs() {
   const [form, setForm] = useState({ name: '', email: '', message: '' });
+
+  // 3. THE AUTOFILL MAGIC
+  useEffect(() => {
+    // Check if someone is currently logged in
+    const user = auth.currentUser;
+    
+    // If they are logged in and have an email, automatically fill it in!
+    if (user && user.email) {
+      setForm((prevForm) => ({
+        ...prevForm,
+        email: user.email
+      }));
+    }
+  }, []); // The empty array means this only runs once when the page loads
 
   const handleSubmit = async (e) => {
     e.preventDefault(); // Stops the page from refreshing
@@ -20,7 +36,16 @@ export default function ContactUs() {
       });
       
       toast.success("Message sent! We will get back to you soon.", { id: loadingToast });
-      setForm({ name: '', email: '', message: '' }); // Clear the form
+      
+      // 4. SMART RESET
+      // We clear the name and message, but keep their email filled in if they are logged in!
+      const user = auth.currentUser;
+      setForm({ 
+        name: '', 
+        email: user ? user.email : '', 
+        message: '' 
+      }); 
+      
     } catch (error) {
       toast.error("Failed to send message.", { id: loadingToast });
     }
@@ -39,6 +64,7 @@ export default function ContactUs() {
         
         <div>
           <label className="block text-gray-700 font-bold mb-2">Your Email</label>
+          {/* If the email is autofilled, they can still edit it if they prefer a different contact email */}
           <input required type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="w-full border p-3 rounded bg-gray-50" placeholder="john@example.com" />
         </div>
 
