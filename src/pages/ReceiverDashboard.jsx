@@ -1,7 +1,8 @@
 // src/pages/ReceiverDashboard.jsx
 import { useState, useEffect } from 'react';
 import { db, auth } from '../firebase/config';
-import { collection, query, where, onSnapshot, doc, runTransaction } from 'firebase/firestore';
+// 1. ADDED 'getDoc' here so we can read the user's profile
+import { collection, query, where, onSnapshot, doc, getDoc, runTransaction } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 
 export default function ReceiverDashboard() {
@@ -9,44 +10,72 @@ export default function ReceiverDashboard() {
   const [myClaims, setMyClaims] = useState([]); 
   const [loading, setLoading] = useState(true);
 
-  // --- NEW: Controls the Pop-up Form ---
+  // --- Controls the Pop-up Form ---
   const [claimModalOpen, setClaimModalOpen] = useState(false);
-  const [selectedFood, setSelectedFood] = useState(null); // Remembers which food they clicked
+  const [selectedFood, setSelectedFood] = useState(null); 
   const [claimForm, setClaimForm] = useState({
     name: '',
-    claimType: 'Organization', // Can be 'Organization' or 'Self Use'
+    claimType: 'Organization', 
     orgName: '',
     phone: '',
     address: ''
   });
 
+  // 2. THE NEW AUTOFILL MAGIC
+  useEffect(() => {
+    const fetchMyProfileData = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        // Look up their specific ID card in the users database
+        const userRef = doc(db, 'users', user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const myData = userSnap.data();
+          
+          // Update the claimForm memory with their saved details!
+          setClaimForm((prevData) => ({
+            ...prevData,
+            name: myData.name || prevData.name,
+            phone: myData.phone || prevData.phone,
+            address: myData.address || prevData.address,
+            orgName: myData.organization || prevData.orgName,
+            // Smart feature: If they have an org saved, select "Organization", else select "Self Use"
+            claimType: myData.organization ? 'Organization' : 'Self Use'
+          }));
+        }
+      }
+    };
+
+    fetchMyProfileData();
+  }, []); // Only runs once when the dashboard loads
+
+  // 3. YOUR EXISTING DASHBOARD DATA FETCH
   useEffect(() => {
     const user = auth.currentUser;
     if (!user) return;
 
     const qAvailable = query(collection(db, "donations"), where("status", "==", "available"));
     const unsubAvailable = onSnapshot(qAvailable, (snapshot) => {
-      setAvailableDonations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setAvailableDonations(snapshot.docs.map(document => ({ id: document.id, ...document.data() })));
     });
 
     const qMyClaims = query(collection(db, "donations"), where("claimedBy", "==", user.uid));
     const unsubMyClaims = onSnapshot(qMyClaims, (snapshot) => {
-      setMyClaims(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setMyClaims(snapshot.docs.map(document => ({ id: document.id, ...document.data() })));
       setLoading(false);
     });
 
     return () => { unsubAvailable(); unsubMyClaims(); };
   }, []);
 
-  // Opens the pop-up when they click the first "Claim" button
   const openClaimForm = (food) => {
     setSelectedFood(food);
     setClaimModalOpen(true);
   };
 
-  // Submits the form and saves everything to Firebase
   const submitClaim = async (e) => {
-    e.preventDefault(); // Stops page from refreshing
+    e.preventDefault(); 
     const user = auth.currentUser;
     if (!user) return toast.error("You must be logged in!");
 
@@ -60,7 +89,6 @@ export default function ReceiverDashboard() {
           throw "Too late! Someone else just claimed this meal.";
         }
         
-        // Save all the new form details to the database!
         transaction.update(foodDocRef, { 
           status: "claimed",
           claimedBy: user.uid,
@@ -74,9 +102,8 @@ export default function ReceiverDashboard() {
       
       toast.success("Success! You have claimed this donation.", { id: loadingToast });
       
-      // Close the pop-up and clear the form
+      // Close the pop-up, but KEEP the form data filled out for the next time!
       setClaimModalOpen(false);
-      setClaimForm({ name: '', claimType: 'Organization', orgName: '', phone: '', address: '' });
     } catch (error) {
       toast.error(error.toString(), { id: loadingToast });
     }
@@ -87,7 +114,7 @@ export default function ReceiverDashboard() {
   return (
     <div className="max-w-6xl mx-auto mt-10 px-4 pb-20 relative">
       
-      {/* --- POP-UP MODAL (Only shows when claimModalOpen is true) --- */}
+      {/* --- POP-UP MODAL --- */}
       {claimModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto">
@@ -108,7 +135,6 @@ export default function ReceiverDashboard() {
                 </select>
               </div>
 
-              {/* Only show the Org Name box if they selected "Organization" */}
               {claimForm.claimType === 'Organization' && (
                 <div>
                   <label className="block text-gray-700 font-bold mb-2">Organization Name</label>
@@ -138,7 +164,6 @@ export default function ReceiverDashboard() {
           </div>
         </div>
       )}
-      {/* --- END POP-UP MODAL --- */}
 
       {/* SECTION 1: Available Food */}
       <h1 className="text-3xl font-bold text-gray-800 mb-6">Available Food Donations</h1>

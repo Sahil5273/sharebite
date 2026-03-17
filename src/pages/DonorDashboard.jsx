@@ -1,7 +1,8 @@
 // src/pages/DonorDashboard.jsx
 import { useState, useEffect } from 'react';
 import { db, auth } from '../firebase/config';
-import { collection, query, where, onSnapshot, addDoc } from 'firebase/firestore';
+// 1. ADDED 'doc' and 'getDoc' to the import list
+import { collection, query, where, onSnapshot, addDoc, doc, getDoc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 
 export default function DonorDashboard() {
@@ -17,13 +18,39 @@ export default function DonorDashboard() {
     phoneNumber: '' 
   });
 
+  // 2. THE NEW AUTOFILL MAGIC
+  useEffect(() => {
+    const fetchMyProfileData = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        // Look up their specific ID card in the users database
+        const userRef = doc(db, 'users', user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const myData = userSnap.data();
+          
+          // Update the formData memory with their saved phone and address
+          setFormData((prevData) => ({
+            ...prevData,
+            address: myData.address || prevData.address,
+            phoneNumber: myData.phone || prevData.phoneNumber
+          }));
+        }
+      }
+    };
+
+    fetchMyProfileData();
+  }, []); // Only runs once when the dashboard loads
+
+  // 3. YOUR EXISTING DONATIONS FETCH
   useEffect(() => {
     const user = auth.currentUser;
     if (!user) return;
 
     const q = query(collection(db, "donations"), where("donorId", "==", user.uid));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMyDonations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setMyDonations(snapshot.docs.map(document => ({ id: document.id, ...document.data() })));
       setLoading(false);
     });
 
@@ -51,7 +78,15 @@ export default function DonorDashboard() {
       
       toast.success("Food posted successfully!", { id: loadingToast });
       setShowForm(false); 
-      setFormData({ foodName: '', quantity: '', foodType: 'Fresh Produce', address: '', phoneNumber: '' }); 
+      
+      // We reset the form, BUT we keep the phone and address filled in!
+      setFormData((prevData) => ({ 
+        foodName: '', 
+        quantity: '', 
+        foodType: 'Fresh Produce', 
+        address: prevData.address, 
+        phoneNumber: prevData.phoneNumber 
+      })); 
     } catch (error) {
       toast.error("Failed to post food.", { id: loadingToast });
     }
@@ -129,7 +164,6 @@ export default function DonorDashboard() {
               <p className="text-gray-600 mb-1"><strong>Quantity:</strong> {food.quantity}</p>
               <p className="text-gray-600 mb-1"><strong>My Phone:</strong> {food.phoneNumber}</p> 
               
-              {/* --- NEW: Upgraded Receiver Details Box --- */}
               {food.status === 'claimed' && (
                 <div className="mt-auto pt-4">
                   <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
@@ -138,7 +172,6 @@ export default function DonorDashboard() {
                     </p>
                     <p className="text-blue-900 font-bold text-lg">{food.claimedByName}</p>
                     
-                    {/* Shows the Org name or 'Self Use' */}
                     <p className="text-blue-700 text-sm font-semibold mb-2 bg-blue-100 inline-block px-2 py-1 rounded">
                       {food.claimedByOrg}
                     </p>

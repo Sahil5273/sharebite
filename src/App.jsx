@@ -17,6 +17,7 @@ import ReceiverDashboard from './pages/ReceiverDashboard';
 import About from './pages/About'; 
 import TechStack from './pages/TechStack';
 import AdminMessages from './pages/AdminMessages';
+import Profile from './pages/Profile';
 
 
 export default function App() {
@@ -71,11 +72,15 @@ export default function App() {
                 )}
               
               {user ? (
-                <div className="flex gap-4 items-center ml-4">
-                  {role === 'donor' && <Link to="/donor" className="hover:underline">Dashboard</Link>}
-                  {role === 'receiver' && <Link to="/receiver" className="hover:underline">Dashboard</Link>}
-                  <button onClick={handleLogout} className="bg-red-500 px-3 py-1 rounded">Logout</button>
-                </div>
+              <div className="flex gap-4 items-center ml-4">
+               {role === 'donor' && <Link to="/donor" className="hover:underline">Dashboard</Link>}
+              {role === 'receiver' && <Link to="/receiver" className="hover:underline">Dashboard</Link>}
+    
+              {/* --- NEW PROFILE BUTTON --- */}
+              <Link to="/profile" className="text-white hover:text-green-200 font-bold">My Profile</Link>
+    
+              <button onClick={handleLogout} className="bg-red-500 px-3 py-1 rounded">Logout</button>
+              </div>
               ) : (
                 <Link to="/login" className="bg-white text-green-600 px-4 py-2 rounded font-bold ml-4">Login</Link>
               )}
@@ -135,6 +140,7 @@ export default function App() {
             <Route path="/receiver" element={<ReceiverDashboard user={user} />} />
             <Route path="/admin" element={<AdminDashboard role={role} />} />
             <Route path="/messages" element={<AdminMessages role={role} />} />
+            <Route path="/profile" element={<Profile />} />
           </Routes>
         </div>
       </div>
