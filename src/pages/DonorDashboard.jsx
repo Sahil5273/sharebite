@@ -1,7 +1,6 @@
 // src/pages/DonorDashboard.jsx
 import { useState, useEffect } from 'react';
 import { db, auth } from '../firebase/config';
-// 1. ADDED 'doc' and 'getDoc' to the import list
 import { collection, query, where, onSnapshot, addDoc, doc, getDoc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 
@@ -18,19 +17,16 @@ export default function DonorDashboard() {
     phoneNumber: '' 
   });
 
-  // 2. THE NEW AUTOFILL MAGIC
+  // --- AUTOFILL MAGIC ---
   useEffect(() => {
     const fetchMyProfileData = async () => {
       const user = auth.currentUser;
       if (user) {
-        // Look up their specific ID card in the users database
         const userRef = doc(db, 'users', user.uid);
         const userSnap = await getDoc(userRef);
 
         if (userSnap.exists()) {
           const myData = userSnap.data();
-          
-          // Update the formData memory with their saved phone and address
           setFormData((prevData) => ({
             ...prevData,
             address: myData.address || prevData.address,
@@ -41,9 +37,9 @@ export default function DonorDashboard() {
     };
 
     fetchMyProfileData();
-  }, []); // Only runs once when the dashboard loads
+  }, []);
 
-  // 3. YOUR EXISTING DONATIONS FETCH
+  // --- FETCH DONATIONS ---
   useEffect(() => {
     const user = auth.currentUser;
     if (!user) return;
@@ -57,6 +53,7 @@ export default function DonorDashboard() {
     return () => unsubscribe();
   }, []);
 
+  // --- HANDLE SUBMISSION (TRIPWIRES REMOVED) ---
   const handlePostFood = async (e) => {
     e.preventDefault(); 
     const user = auth.currentUser;
@@ -79,7 +76,7 @@ export default function DonorDashboard() {
       toast.success("Food posted successfully!", { id: loadingToast });
       setShowForm(false); 
       
-      // We reset the form, BUT we keep the phone and address filled in!
+      // Reset form but keep the autofilled address and phone
       setFormData((prevData) => ({ 
         foodName: '', 
         quantity: '', 

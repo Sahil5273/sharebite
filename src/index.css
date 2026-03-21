@@ -1,3 +1,53 @@
+/* 1. Tailwind Setup */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* 2. Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+/* 3. Global Colors & Settings */
+:root {
+  --forest:    #0f2b1e;
+  --forest-md: #1d4a30;
+  --forest-lt: #2d6647;
+  --leaf:      #3d8b5e;
+  --mint:      #a8d5b5;
+  --cream:     #fdf8f0;
+  --warm:      #f5ede0;
+  --terra:     #c4602a;
+  --terra-lt:  #e8825a;
+  --gold:      #d4a847;
+  --text:      #1a1a1a;
+  --text-muted:#5a5a5a;
+  
+  --nav-h:     72px;
+  --nav-h-sm:  60px;
+  --radius:    12px;
+  --radius-lg: 20px;
+  --shadow-sm: 0 2px 12px rgba(15,43,30,0.08);
+  --shadow-md: 0 8px 32px rgba(15,43,30,0.14);
+  --shadow-lg: 0 20px 60px rgba(15,43,30,0.18);
+  --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  --accent: #646cff;
+  --accent-bg: #f9f9f9;
+  --accent-border: #535bf2;
+  --border: #e2e8f0;
+  --social-bg: #f1f5f9;
+}
+
+*, *::before, *::after { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--text);
+  min-height: 100vh;
+}
