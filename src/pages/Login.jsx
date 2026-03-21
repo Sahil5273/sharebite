@@ -1,64 +1,67 @@
-// src/pages/Login.jsx
-import { useState } from 'react';
-import { signInWithPopup } from 'firebase/auth';
+import { auth, db } from '../firebase/config';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, provider, db } from '../firebase/config';
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 export default function Login() {
-  const [needsRole, setNeedsRole] = useState(false);
-  const [tempUser, setTempUser] = useState(null);
   const navigate = useNavigate();
 
   const handleGoogleLogin = async () => {
+    const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-      
-      // Check if we already have this user saved
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      
-      if (!userDoc.exists()) {
-        // New user! Ask them what role they want.
-        setTempUser(user);
-        setNeedsRole(true);
+
+      // 1. Check if the user already exists in our database
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        
+        // 2. If they have a role, send them to their dashboard
+        if (userData.role === 'donor') {
+          navigate('/donor');
+          toast.success("Welcome back, Donor!");
+        } else if (userData.role === 'receiver') {
+          navigate('/receiver');
+          toast.success("Welcome back, Receiver!");
+        } else {
+          // If they logged in before but never picked a role
+          navigate('/');
+        }
       } else {
-        // Old user, send them to their dashboard
-        const role = userDoc.data().role;
-        navigate(role === 'donor' ? '/donor' : '/receiver');
+        // 3. Brand new user? Send to Home so the Welcome Screen shows up
+        // We also create their basic profile here
+        await setDoc(doc(db, "users", user.uid), {
+          name: user.displayName,
+          email: user.email,
+          createdAt: new Date().toISOString()
+        });
+        navigate('/');
+        toast.success("Welcome to ShareBite!");
       }
     } catch (error) {
-      console.error("Login failed", error);
+      toast.error("Login failed. Please try again.");
+      console.error(error);
     }
   };
 
-  const selectRole = async (selectedRole) => {
-    await setDoc(doc(db, 'users', tempUser.uid), {
-      name: tempUser.displayName,
-      email: tempUser.email,
-      role: selectedRole,
-      createdAt: new Date()
-    });
-    navigate(selectedRole === 'donor' ? '/donor' : '/receiver');
-  };
-
   return (
-    <div className="flex flex-col items-center mt-20">
-      <h2 className="text-3xl font-bold mb-6">Welcome to ShareBite</h2>
-      
-      {!needsRole ? (
-        <button onClick={handleGoogleLogin} className="bg-blue-600 text-white px-6 py-3 rounded shadow hover:bg-blue-700">
-          Sign in with Google
+    <div className="flex flex-col items-center justify-center min-h-[70vh]">
+      <div className="bg-white p-10 rounded-3xl shadow-xl border border-gray-100 text-center max-w-md w-full">
+        <div className="text-5xl mb-6">🍲</div>
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">Join ShareBite</h1>
+        <p className="text-gray-600 mb-8">Sign in to start donating or receiving surplus food in your community.</p>
+        
+        <button 
+          onClick={handleGoogleLogin}
+          className="flex items-center justify-center gap-3 w-full bg-white border-2 border-gray-200 hover:border-green-500 py-3 rounded-xl font-bold transition-all transform hover:-translate-y-1"
+        >
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/0/google.svg" alt="Google" className="w-6 h-6" />
+          Continue with Google
         </button>
-      ) : (
-        <div className="bg-white p-8 rounded shadow text-center">
-          <h3 className="text-xl mb-4">Are you here to donate or receive food?</h3>
-          <div className="flex gap-4">
-            <button onClick={() => selectRole('donor')} className="bg-green-500 text-white px-6 py-2 rounded">I am a Donor</button>
-            <button onClick={() => selectRole('receiver')} className="bg-blue-500 text-white px-6 py-2 rounded">I am a Receiver</button>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
