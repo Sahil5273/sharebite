@@ -1,13 +1,11 @@
 // src/App.jsx
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from './firebase/config';
 import { superAdmins } from './adminConfig';
 import './App.css'
-
-
 
 import Home from './pages/Home';
 import AdminDashboard from './pages/AdminDashboard';
@@ -210,16 +208,40 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/about" element={<About />} />
-              <Route path="/login" element={<Login />} />
+              
+              {/* Smart Login Route */}
+              <Route 
+                path="/login" 
+                element={
+                  user && role === 'donor' ? <Navigate to="/donor" replace /> :
+                  user && role === 'receiver' ? <Navigate to="/receiver" replace /> :
+                  <Login />
+                } 
+              />
+
               <Route path="/how-it-works" element={<HowItWorks />} />
               <Route path="/faq" element={<FAQ />} />
               <Route path="/contact" element={<ContactUs />} />
               <Route path="/tech" element={<TechStack />} />
-              <Route path="/donor" element={<DonorDashboard user={user} />} />
-              <Route path="/receiver" element={<ReceiverDashboard user={user} />} />
+              
+              {/* Protected Dashboard Routes */}
+              <Route 
+                path="/donor" 
+                element={user ? <DonorDashboard user={user} /> : <Navigate to="/login" replace />} 
+              />
+              <Route 
+                path="/receiver" 
+                element={user ? <ReceiverDashboard user={user} /> : <Navigate to="/login" replace />} 
+              />
+              
               <Route path="/admin" element={<AdminDashboard role={role} />} />
               <Route path="/messages" element={<AdminMessages role={role} />} />
-              <Route path="/profile" element={<Profile />} />
+              
+              {/* Protected Profile Route */}
+              <Route 
+                path="/profile" 
+                element={user ? <Profile /> : <Navigate to="/login" replace />} 
+              />
             </Routes>
           )}
         </div>

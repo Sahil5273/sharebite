@@ -26,3 +26,4 @@ dist-ssr
 
 # Firebase Secret Keys
 src/firebase/config.js
+
