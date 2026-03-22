@@ -1,17 +1,18 @@
 // src/pages/DonorDashboard.jsx
 import { useState, useEffect } from 'react';
-import { db, auth } from '../firebase/config';
+import { db, auth } from '../firebase/config'; // We removed storage from here!
 import { collection, query, where, onSnapshot, addDoc, doc, getDoc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
+import imageCompression from 'browser-image-compression'; 
 
 export default function DonorDashboard() {
   const [myDonations, setMyDonations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false); 
   
-  // 1. ADDED: States for the smart address dropdown
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [imageFile, setImageFile] = useState(null); 
   
   const [formData, setFormData] = useState({
     foodName: '',
@@ -19,11 +20,10 @@ export default function DonorDashboard() {
     foodType: 'Fresh Produce',
     address: '',
     phoneNumber: '',
-    lat: '', // ADDED: To store GPS Latitude
-    lon: ''  // ADDED: To store GPS Longitude
+    lat: '', 
+    lon: ''  
   });
 
-  // --- AUTOFILL MAGIC ---
   useEffect(() => {
     const fetchMyProfileData = async () => {
       const user = auth.currentUser;
@@ -44,7 +44,6 @@ export default function DonorDashboard() {
     fetchMyProfileData();
   }, []);
 
-  // --- FETCH DONATIONS ---
   useEffect(() => {
     const user = auth.currentUser;
     if (!user) return;
@@ -58,16 +57,13 @@ export default function DonorDashboard() {
     return () => unsubscribe();
   }, []);
 
-  // 2. ADDED: THE SMART ADDRESS SEARCH FUNCTION
   const handleAddressTyping = async (e) => {
     const typedValue = e.target.value;
     setFormData({ ...formData, address: typedValue });
 
-    // Only search if they have typed at least 3 letters
     if (typedValue.length > 2) {
       try {
         const token = import.meta.env.VITE_LOCATIONIQ_TOKEN;
-        // Search LocationIQ (Locked to India 'in' for better accuracy)
         const response = await fetch(`https://api.locationiq.com/v1/autocomplete?key=${token}&q=${typedValue}&limit=5&countrycodes=in`);
         const data = await response.json();
         
@@ -83,18 +79,16 @@ export default function DonorDashboard() {
     }
   };
 
-  // 3. ADDED: WHAT HAPPENS WHEN THEY CLICK A SUGGESTION
   const handleSelectAddress = (place) => {
     setFormData({
       ...formData,
-      address: place.display_name, // The perfectly formatted address
-      lat: place.lat,              // GPS Latitude
-      lon: place.lon               // GPS Longitude
+      address: place.display_name, 
+      lat: place.lat,              
+      lon: place.lon               
     });
-    setShowSuggestions(false); // Hide the dropdown
+    setShowSuggestions(false); 
   };
 
-  // --- HANDLE SUBMISSION ---
   const handlePostFood = async (e) => {
     e.preventDefault(); 
     const user = auth.currentUser;
@@ -105,24 +99,55 @@ export default function DonorDashboard() {
       return;
     }
 
-    const loadingToast = toast.loading("Posting food...");
+    const loadingToast = toast.loading("Preparing your post...");
     
     try {
+      let imageUrl = ""; 
+
+      if (imageFile) {
+        toast.loading("Shrinking picture...", { id: loadingToast });
+        const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1024, useWebWorker: true };
+        const compressedFile = await imageCompression(imageFile, options);
+
+        toast.loading("Uploading to Cloudinary...", { id: loadingToast });
+        
+        // --- NEW CLOUDINARY UPLOAD LOGIC ---
+        const cloudinaryData = new FormData();
+        cloudinaryData.append("file", compressedFile);
+        
+        // ⚠️ CHANGE THESE TWO LINES TO MATCH YOUR CLOUDINARY ACCOUNT ⚠️
+        cloudinaryData.append("upload_preset", "sharebite_preset"); // <-- Put your preset name here
+        const cloudName = "dlyqnzrw7"; 
+
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+          method: "POST",
+          body: cloudinaryData,
+        });
+
+        const uploadedImage = await res.json();
+        imageUrl = uploadedImage.secure_url; // We get the new link here!
+        // --- END CLOUDINARY LOGIC ---
+      }
+
+      toast.loading("Saving details to Firebase...", { id: loadingToast });
+
       await addDoc(collection(db, "donations"), {
         foodName: formData.foodName,
         quantity: formData.quantity,
         foodType: formData.foodType,
         address: formData.address,
-        lat: formData.lat, // SAVING GPS DATA
-        lon: formData.lon, // SAVING GPS DATA
+        lat: formData.lat, 
+        lon: formData.lon, 
         phoneNumber: formData.phoneNumber, 
         donorId: user.uid,
         status: "available",
+        imageUrl: imageUrl, 
         createdAt: new Date().toISOString()
       });
       
       toast.success("Food posted successfully!", { id: loadingToast });
       setShowForm(false); 
+      setImageFile(null); 
       
       setFormData((prevData) => ({ 
         foodName: '', quantity: '', foodType: 'Fresh Produce', 
@@ -130,6 +155,7 @@ export default function DonorDashboard() {
         phoneNumber: prevData.phoneNumber 
       })); 
     } catch (error) {
+      console.error(error);
       toast.error("Failed to post food.", { id: loadingToast });
     }
   };
@@ -170,7 +196,6 @@ export default function DonorDashboard() {
               </select>
             </div>
             
-            {/* 4. ADDED: THE DROPDOWN UI FOR ADDRESS */}
             <div className="relative">
               <label className="block text-gray-700 font-bold mb-2">Pick-up Address</label>
               <input 
@@ -181,7 +206,6 @@ export default function DonorDashboard() {
                 className="w-full border p-3 rounded bg-gray-50" 
                 placeholder="Start typing your street/area..." 
               />
-              {/* Dropdown Box */}
               {showSuggestions && suggestions.length > 0 && (
                 <ul className="absolute z-10 w-full bg-white border border-gray-200 shadow-xl max-h-60 overflow-y-auto mt-1 rounded-lg">
                   {suggestions.map((place, index) => (
@@ -197,10 +221,21 @@ export default function DonorDashboard() {
               )}
             </div>
 
-            <div className="md:col-span-2">
+            <div className="md:col-span-1">
               <label className="block text-gray-700 font-bold mb-2">Your Contact Number</label>
               <input required type="tel" value={formData.phoneNumber} onChange={e => setFormData({...formData, phoneNumber: e.target.value})} className="w-full border p-3 rounded bg-gray-50" placeholder="Phone Number for the receiver to call you" />
             </div>
+
+            <div className="md:col-span-1">
+              <label className="block text-gray-700 font-bold mb-2">Food Picture (Optional)</label>
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={(e) => setImageFile(e.target.files[0])} 
+                className="w-full border p-2 rounded bg-gray-50" 
+              />
+            </div>
+
           </div>
           <button type="submit" className="mt-6 w-full bg-green-600 text-white font-bold py-4 rounded-xl hover:bg-green-700 transition text-lg">
             Post Donation to Live Map
@@ -216,6 +251,15 @@ export default function DonorDashboard() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {myDonations.map((food) => (
             <div key={food.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col">
+              
+              {food.imageUrl && (
+                <img 
+                  src={food.imageUrl} 
+                  alt={food.foodName} 
+                  className="w-full h-40 object-cover rounded-xl mb-4 border border-gray-100"
+                />
+              )}
+
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-xl font-bold text-gray-800">{food.foodName}</h3>
                 {food.status === 'claimed' ? (

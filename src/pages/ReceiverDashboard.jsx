@@ -13,7 +13,6 @@ export default function ReceiverDashboard() {
   const [claimModalOpen, setClaimModalOpen] = useState(false);
   const [selectedFood, setSelectedFood] = useState(null);
   
-  // 1. ADDED: States for the LocationIQ dropdown
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -23,8 +22,8 @@ export default function ReceiverDashboard() {
     orgName: '',
     phone: '',
     address: '',
-    lat: '', // Added for GPS
-    lon: ''  // Added for GPS
+    lat: '', 
+    lon: ''  
   });
 
   useEffect(() => {
@@ -72,7 +71,6 @@ export default function ReceiverDashboard() {
     setClaimModalOpen(true);
   };
 
-  // 2. ADDED: The missing Search Function for the Receiver
   const handleAddressTyping = async (e) => {
     const typedValue = e.target.value;
     setClaimForm({ ...claimForm, address: typedValue });
@@ -95,7 +93,6 @@ export default function ReceiverDashboard() {
     }
   };
 
-  // 3. ADDED: What happens when they click a dropdown suggestion
   const handleSelectAddress = (place) => {
     setClaimForm({
       ...claimForm,
@@ -134,7 +131,6 @@ export default function ReceiverDashboard() {
       toast.dismiss(loadingToast);
       setClaimModalOpen(false);
 
-      // ─── UPGRADED SAFETY NOTIFICATION ───
       Swal.fire({
         html: `
           <style>
@@ -299,23 +295,19 @@ export default function ReceiverDashboard() {
         width: '740px',
         padding: '0',
         background: '#fff',
-        
-      // ... your HTML string ...
-      
       customClass: {
         popup: 'rounded-3xl',
         closeButton: 'text-white hover:text-gray-300'
       },
-      // 🚨 UPDATED: Now it just closes instantly without changing text!
       didOpen: () => {
         const btn = document.getElementById('understood-btn');
         if (btn) {
           btn.addEventListener('click', () => {
-            Swal.close(); // Instantly closes the popup
+            Swal.close(); 
           });
         }
       }
-    }); // <-- End of Swal.fire
+    }); 
 
     } catch (error) {
       toast.error(error.toString(), { id: loadingToast });
@@ -323,11 +315,11 @@ export default function ReceiverDashboard() {
   };
 
   if (loading) return <div className="p-10 text-center text-xl">Loading dashboard...</div>;
+  console.log("Here is the food data:", availableDonations);
 
   return (
     <div className="max-w-6xl mx-auto mt-10 px-4 pb-20 relative">
 
-      {/* --- CLAIM MODAL --- */}
       {claimModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto">
@@ -357,7 +349,6 @@ export default function ReceiverDashboard() {
                 <input required type="tel" value={claimForm.phone} onChange={e => setClaimForm({...claimForm, phone: e.target.value})} className="w-full border p-3 rounded bg-gray-50" placeholder="So the donor can contact you" />
               </div>
               
-              {/* 4. CORRECTED: The single, working LocationIQ Address Box */}
               <div className="relative">
                 <label className="block text-gray-700 font-bold mb-2">Your Office/Home Address</label>
                 <input 
@@ -368,7 +359,6 @@ export default function ReceiverDashboard() {
                   className="w-full border p-3 rounded bg-gray-50" 
                   placeholder="Where are you coming from?" 
                 />
-                {/* Dropdown Box */}
                 {showSuggestions && suggestions.length > 0 && (
                   <ul className="absolute z-10 w-full bg-white border border-gray-200 shadow-xl max-h-60 overflow-y-auto mt-1 rounded-lg">
                     {suggestions.map((place, index) => (
@@ -407,6 +397,16 @@ export default function ReceiverDashboard() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           {availableDonations.map((food) => (
             <div key={food.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col">
+              
+              {/* ADDED: Show the food picture here! */}
+              {food.imageUrl && (
+                <img 
+                  src={food.imageUrl} 
+                  alt={food.foodName} 
+                  className="w-full h-48 object-cover rounded-xl mb-4 border border-gray-100"
+                />
+              )}
+
               <h3 className="text-xl font-bold text-green-700 mb-2">{food.foodName}</h3>
               <p className="text-gray-600 mb-1"><strong>Quantity:</strong> {food.quantity}</p>
               <p className="text-gray-600 mb-1"><strong>Address:</strong> {food.address}</p>
@@ -432,6 +432,16 @@ export default function ReceiverDashboard() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {myClaims.map((food) => (
             <div key={food.id} className="bg-green-50 p-6 rounded-2xl shadow-sm border border-green-200 flex flex-col">
+              
+              {/* ADDED: Show the image here too! */}
+              {food.imageUrl && (
+                <img 
+                  src={food.imageUrl} 
+                  alt={food.foodName} 
+                  className="w-full h-40 object-cover rounded-xl mb-4 border border-green-200"
+                />
+              )}
+
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-xl font-bold text-green-800">{food.foodName}</h3>
                 <span className="bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full">CLAIMED</span>
