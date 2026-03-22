@@ -12,12 +12,19 @@ export default function ReceiverDashboard() {
 
   const [claimModalOpen, setClaimModalOpen] = useState(false);
   const [selectedFood, setSelectedFood] = useState(null);
+  
+  // 1. ADDED: States for the LocationIQ dropdown
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
   const [claimForm, setClaimForm] = useState({
     name: '',
     claimType: 'Organization',
     orgName: '',
     phone: '',
-    address: ''
+    address: '',
+    lat: '', // Added for GPS
+    lon: ''  // Added for GPS
   });
 
   useEffect(() => {
@@ -63,6 +70,40 @@ export default function ReceiverDashboard() {
   const openClaimForm = (food) => {
     setSelectedFood(food);
     setClaimModalOpen(true);
+  };
+
+  // 2. ADDED: The missing Search Function for the Receiver
+  const handleAddressTyping = async (e) => {
+    const typedValue = e.target.value;
+    setClaimForm({ ...claimForm, address: typedValue });
+
+    if (typedValue.length > 2) {
+      try {
+        const token = import.meta.env.VITE_LOCATIONIQ_TOKEN;
+        const response = await fetch(`https://api.locationiq.com/v1/autocomplete?key=${token}&q=${typedValue}&limit=5&countrycodes=in`);
+        const data = await response.json();
+        
+        if (!data.error) {
+          setSuggestions(data);
+          setShowSuggestions(true);
+        }
+      } catch (error) {
+        console.error("Location Search Error:", error);
+      }
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  // 3. ADDED: What happens when they click a dropdown suggestion
+  const handleSelectAddress = (place) => {
+    setClaimForm({
+      ...claimForm,
+      address: place.display_name,
+      lat: place.lat,
+      lon: place.lon
+    });
+    setShowSuggestions(false);
   };
 
   const submitClaim = async (e) => {
@@ -246,8 +287,8 @@ export default function ReceiverDashboard() {
                 </div>
               </div>
 
-              <button class="sw-cta" onclick="this.textContent='✓ Great, heading out now!'; setTimeout(() => Swal.close(), 600)">
-              ✓ &nbsp; Understood, I'm ready to go!
+              <button class="sw-cta" id="understood-btn">
+               ✓ &nbsp; Understood, I'm ready to go!
               </button>
               <div class="sw-footer">ShareBite · Connecting donors &amp; receivers across your city</div>
             </div>
@@ -258,11 +299,23 @@ export default function ReceiverDashboard() {
         width: '740px',
         padding: '0',
         background: '#fff',
-        customClass: {
-          popup: 'rounded-3xl',
-          closeButton: 'text-white hover:text-gray-300'
+        
+      // ... your HTML string ...
+      
+      customClass: {
+        popup: 'rounded-3xl',
+        closeButton: 'text-white hover:text-gray-300'
+      },
+      // 🚨 UPDATED: Now it just closes instantly without changing text!
+      didOpen: () => {
+        const btn = document.getElementById('understood-btn');
+        if (btn) {
+          btn.addEventListener('click', () => {
+            Swal.close(); // Instantly closes the popup
+          });
         }
-      });
+      }
+    }); // <-- End of Swal.fire
 
     } catch (error) {
       toast.error(error.toString(), { id: loadingToast });
@@ -303,10 +356,34 @@ export default function ReceiverDashboard() {
                 <label className="block text-gray-700 font-bold mb-2">Your Phone Number</label>
                 <input required type="tel" value={claimForm.phone} onChange={e => setClaimForm({...claimForm, phone: e.target.value})} className="w-full border p-3 rounded bg-gray-50" placeholder="So the donor can contact you" />
               </div>
-              <div>
+              
+              {/* 4. CORRECTED: The single, working LocationIQ Address Box */}
+              <div className="relative">
                 <label className="block text-gray-700 font-bold mb-2">Your Office/Home Address</label>
-                <input required type="text" value={claimForm.address} onChange={e => setClaimForm({...claimForm, address: e.target.value})} className="w-full border p-3 rounded bg-gray-50" placeholder="Where are you coming from?" />
+                <input 
+                  required 
+                  type="text" 
+                  value={claimForm.address} 
+                  onChange={handleAddressTyping} 
+                  className="w-full border p-3 rounded bg-gray-50" 
+                  placeholder="Where are you coming from?" 
+                />
+                {/* Dropdown Box */}
+                {showSuggestions && suggestions.length > 0 && (
+                  <ul className="absolute z-10 w-full bg-white border border-gray-200 shadow-xl max-h-60 overflow-y-auto mt-1 rounded-lg">
+                    {suggestions.map((place, index) => (
+                      <li 
+                        key={index} 
+                        onClick={() => handleSelectAddress(place)}
+                        className="p-3 hover:bg-green-50 cursor-pointer border-b border-gray-100 text-sm text-gray-700"
+                      >
+                        📍 {place.display_name}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
+
               <div className="flex gap-4 mt-4">
                 <button type="button" onClick={() => setClaimModalOpen(false)} className="w-1/3 bg-gray-200 text-gray-800 font-bold py-3 rounded-xl hover:bg-gray-300">
                   Cancel
