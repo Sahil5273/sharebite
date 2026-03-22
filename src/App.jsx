@@ -108,30 +108,38 @@ export default function App() {
             ))}
           </div>
 
-          {isAdmin && (
-            <div className="sb-admin-cluster">
-              <span className="sb-admin-dot" />
-              <Link to="/admin" className="sb-admin-link">Live activity</Link>
-              <Link to="/messages" className="sb-admin-link">Inbox</Link>
-              <Link to="/users" className="sb-admin-link">Manage Users</Link>
-            </div>
-          )}
-
           <div className="sb-actions">
+            {isAdmin && (
+              <div className="sb-admin-dropdown">
+                <button className="sb-admin-dropbtn">
+                  <span className="sb-admin-dot" /> Admin Panel ▾
+                </button>
+                <div className="sb-admin-dropdown-content">
+                  <Link to="/admin" className="sb-admin-dropdown-link">📊 Live Activity</Link>
+                  <Link to="/messages" className="sb-admin-dropdown-link">📥 Inbox</Link>
+                  <Link to="/users" className="sb-admin-dropdown-link">👥 Manage Users</Link>
+                </div>
+              </div>
+            )}
+
             {user ? (
               <>
+                {/* STRICT ROLE CHECK: Only true Donors see this */}
                 {role === 'donor' && (
                   <Link to="/donor" className="sb-dashboard-btn">
                     <span className="sb-role-badge donor">Donor</span>
                     Dashboard
                   </Link>
                 )}
+                
+                {/* STRICT ROLE CHECK: Only true Receivers see this */}
                 {role === 'receiver' && (
                   <Link to="/receiver" className="sb-dashboard-btn">
                     <span className="sb-role-badge receiver">Receiver</span>
                     Dashboard
                   </Link>
                 )}
+                
                 <Link to="/profile" className="sb-profile-btn">
                   <div className="sb-avatar">{getUserInitials()}</div>
                   My profile
@@ -150,28 +158,32 @@ export default function App() {
       </nav>
 
       <div className={`sb-mobile-menu${menuOpen ? ' open' : ''}`}>
-        {navLinks.map(({ to, label }) => (
-          <Link key={to} to={to} className="sb-mobile-link" onClick={closeMenu}>{label}</Link>
-        ))}
+        <div className="sb-mobile-nav-links">
+          {navLinks.map(({ to, label }) => (
+            <Link key={to} to={to} className="sb-mobile-link" onClick={closeMenu}>{label}</Link>
+          ))}
+        </div>
 
         {isAdmin && (
-          <div className="sb-mobile-section">
-            <p className="sb-mobile-section-label">Admin</p>
-            <Link to="/admin" className="sb-mobile-admin-link" onClick={closeMenu}><span className="sb-admin-dot" /> Live activity</Link>
-            <Link to="/messages" className="sb-mobile-admin-link" onClick={closeMenu}><span className="sb-admin-dot" /> Inbox</Link>
+          <div className="sb-mobile-section admin-card">
+            <p className="sb-mobile-section-label">🛡️ Admin Controls</p>
+            <Link to="/admin" className="sb-mobile-admin-link" onClick={closeMenu}>📊 Live activity</Link>
+            <Link to="/messages" className="sb-mobile-admin-link" onClick={closeMenu}>📥 Inbox</Link>
+            <Link to="/users" className="sb-mobile-admin-link" onClick={closeMenu}>👥 Manage Users</Link>
           </div>
         )}
 
         <div className="sb-mobile-actions">
           {user ? (
             <>
+              {/* STRICT ROLE CHECK FOR MOBILE */}
               {role === 'donor' && (
-                <Link to="/donor" className="sb-mobile-link" style={{ fontWeight: 600, color: '#7a5c10' }} onClick={closeMenu}>Donor Dashboard</Link>
+                <Link to="/donor" className="sb-mobile-dashboard-link donor" onClick={closeMenu}>🍲 Donor Dashboard</Link>
               )}
               {role === 'receiver' && (
-                <Link to="/receiver" className="sb-mobile-link" style={{ fontWeight: 600, color: '#7a2e0e' }} onClick={closeMenu}>Receiver Dashboard</Link>
+                <Link to="/receiver" className="sb-mobile-dashboard-link receiver" onClick={closeMenu}>🤲 Receiver Dashboard</Link>
               )}
-              <Link to="/profile" className="sb-mobile-link" onClick={closeMenu} style={{ fontWeight: 600 }}>My Profile</Link>
+              <Link to="/profile" className="sb-mobile-profile-link" onClick={closeMenu}>👤 My Profile</Link>
               <button className="sb-mobile-logout" onClick={handleLogout}>Sign out</button>
             </>
           ) : (
@@ -211,12 +223,12 @@ export default function App() {
               <Route path="/" element={<Home />} />
               <Route path="/about" element={<About />} />
               
-              {/* Smart Login Route */}
               <Route 
                 path="/login" 
                 element={
                   user && role === 'donor' ? <Navigate to="/donor" replace /> :
                   user && role === 'receiver' ? <Navigate to="/receiver" replace /> :
+                  user && isAdmin ? <Navigate to="/admin" replace /> :
                   <Login />
                 } 
               />
@@ -226,27 +238,31 @@ export default function App() {
               <Route path="/contact" element={<ContactUs />} />
               <Route path="/tech" element={<TechStack />} />
               
-              {/* Protected Dashboard Routes */}
+              {/* UPDATED: Strict routing for Donor */}
               <Route 
                 path="/donor" 
-                element={user ? <DonorDashboard user={user} /> : <Navigate to="/login" replace />} 
+                element={
+                  !user ? <Navigate to="/login" replace /> : 
+                  role === 'receiver' ? <Navigate to="/receiver" replace /> : 
+                  <DonorDashboard user={user} />
+                } 
               />
+              
+              {/* UPDATED: Strict routing for Receiver */}
               <Route 
                 path="/receiver" 
-                element={user ? <ReceiverDashboard user={user} /> : <Navigate to="/login" replace />} 
+                element={
+                  !user ? <Navigate to="/login" replace /> : 
+                  role === 'donor' ? <Navigate to="/donor" replace /> : 
+                  <ReceiverDashboard user={user} />
+                } 
               />
+
+              <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" replace />} />
               
               <Route path="/admin" element={<AdminDashboard role={role} />} />
               <Route path="/messages" element={<AdminMessages role={role} />} />
-              <Route path="/messages" element={<AdminMessages role={role} />} />
-              {/* 🚨 ADD THIS NEW ROUTE */}
               <Route path="/users" element={<AdminUsers isAdmin={isAdmin} />} />
-              
-              {/* Protected Profile Route */}
-              <Route 
-                path="/profile" 
-                element={user ? <Profile /> : <Navigate to="/login" replace />} 
-              />
             </Routes>
           )}
         </div>
