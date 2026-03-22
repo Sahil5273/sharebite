@@ -1,5 +1,4 @@
 // src/pages/TechStack.jsx
-// Added the Shield and Sparkles icons for the new features!
 import { Code, Database, Palette, Smartphone, Zap, MapPin, Shield, Sparkles } from 'lucide-react';
 
 export default function TechStack() {
@@ -23,6 +22,7 @@ export default function TechStack() {
           <ul className="list-disc list-inside text-gray-600 space-y-2">
             <li><strong>React.js (Vite):</strong> Used to build a fast, modern user interface.</li>
             <li><strong>React Router:</strong> Used to switch between pages smoothly without reloading the website.</li>
+            <li><strong>LocationIQ API:</strong> Used to create a smart address dropdown and fetch exact GPS coordinates.</li>
             <li><strong>Lucide React:</strong> Used for adding clean, professional icons.</li>
           </ul>
         </div>
@@ -52,6 +52,7 @@ export default function TechStack() {
           </div>
           <ul className="list-disc list-inside text-gray-600 space-y-2">
             <li><strong>Tailwind CSS:</strong> Used to easily style the website, add colors, and make nice shadow effects.</li>
+            <li><strong>SweetAlert2:</strong> Used to build the interactive, highly-styled safety checklist modals.</li>
             <li><strong>React Hot Toast:</strong> Used for the smooth, sliding pop-up notifications.</li>
           </ul>
         </div>
@@ -97,25 +98,25 @@ export default function TechStack() {
             </div>
           </div>
 
-          {/* Challenge 2: The New Security Feature! */}
+          {/* Challenge 2: Security & Blacklisting */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 items-start">
             <div className="bg-red-100 p-4 rounded-full flex-shrink-0">
               <Shield className="text-red-600 w-8 h-8" />
             </div>
             <div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">Role-Based Access Control (RBAC)</h3>
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">Platform Governance & Security</h3>
               <div className="mb-3">
                 <span className="font-bold text-red-600 mr-2">The Challenge:</span> 
-                <span className="text-gray-700">We needed a secure way to give certain teammates "Admin" powers without leaving the database vulnerable to hackers modifying the code.</span>
+                <span className="text-gray-700">We needed a secure way to stop spammers and bad actors from accessing the platform without deleting their historical data.</span>
               </div>
               <div>
                 <span className="font-bold text-green-600 mr-2">The Solution:</span> 
-                <span className="text-gray-700">We built a hybrid "Super Admin" pattern. We combined a hardcoded configuration list with dynamic database roles, all backed by strict Firebase Firestore security rules that physically block unauthorized reads and deletes.</span>
+                <span className="text-gray-700">We built an Admin Dashboard with a dynamic "Bouncer." Admins can flag malicious users, and Firebase Auth instantly intercepts and rejects their login attempts at the gate, while preserving their past records for analytics.</span>
               </div>
             </div>
           </div>
 
-          {/* Challenge 3: The New UX Feature! */}
+          {/* Challenge 3: UX Feature */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 items-start">
             <div className="bg-purple-100 p-4 rounded-full flex-shrink-0">
               <Sparkles className="text-purple-600 w-8 h-8" />
@@ -133,7 +134,7 @@ export default function TechStack() {
             </div>
           </div>
 
-          {/* Challenge 4 (Your original Maps challenge) */}
+          {/* Challenge 4: LocationIQ integration */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 items-start">
             <div className="bg-blue-100 p-4 rounded-full flex-shrink-0">
               <MapPin className="text-blue-600 w-8 h-8" />
@@ -142,11 +143,11 @@ export default function TechStack() {
               <h3 className="text-2xl font-bold text-gray-800 mb-2">Geographical Accuracy</h3>
               <div className="mb-3">
                 <span className="font-bold text-red-600 mr-2">The Challenge:</span> 
-                <span className="text-gray-700">Users often provide vague addresses that are hard for Google Maps to pinpoint precisely.</span>
+                <span className="text-gray-700">Users often provide vague, misspelled addresses that make it nearly impossible for receivers to locate the food pickup spot.</span>
               </div>
               <div>
                 <span className="font-bold text-green-600 mr-2">The Solution:</span> 
-                <span className="text-gray-700">Integrated the Google Places Autocomplete API to force standardized address formats, ensuring the marker on the map is accurate within a few meters.</span>
+                <span className="text-gray-700">Integrated the LocationIQ Autocomplete API to enforce standardized address formats. It provides users with a smart drop-down list as they type and converts the selection into precise GPS coordinates behind the scenes.</span>
               </div>
             </div>
           </div>
