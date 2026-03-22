@@ -246,8 +246,8 @@ export default function ReceiverDashboard() {
                 </div>
               </div>
 
-              <button class="sw-cta" onclick="this.textContent='✓  Great, heading out now!'">
-                ✓ &nbsp; Understood, I'm ready to go!
+              <button class="sw-cta" onclick="this.textContent='✓ Great, heading out now!'; setTimeout(() => Swal.close(), 600)">
+              ✓ &nbsp; Understood, I'm ready to go!
               </button>
               <div class="sw-footer">ShareBite · Connecting donors &amp; receivers across your city</div>
             </div>
