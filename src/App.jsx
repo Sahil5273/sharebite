@@ -19,6 +19,7 @@ import About from './pages/About';
 import TechStack from './pages/TechStack';
 import AdminMessages from './pages/AdminMessages';
 import Profile from './pages/Profile';
+import AdminUsers from './pages/AdminUsers';
 
 const NavLink = ({ to, children, onClick }) => {
   const location = useLocation();
@@ -112,6 +113,7 @@ export default function App() {
               <span className="sb-admin-dot" />
               <Link to="/admin" className="sb-admin-link">Live activity</Link>
               <Link to="/messages" className="sb-admin-link">Inbox</Link>
+              <Link to="/users" className="sb-admin-link">Manage Users</Link>
             </div>
           )}
 
@@ -236,6 +238,9 @@ export default function App() {
               
               <Route path="/admin" element={<AdminDashboard role={role} />} />
               <Route path="/messages" element={<AdminMessages role={role} />} />
+              <Route path="/messages" element={<AdminMessages role={role} />} />
+              {/* 🚨 ADD THIS NEW ROUTE */}
+              <Route path="/users" element={<AdminUsers isAdmin={isAdmin} />} />
               
               {/* Protected Profile Route */}
               <Route 

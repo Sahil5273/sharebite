@@ -18,6 +18,12 @@ export default function Login() {
 
       if (userDoc.exists()) {
         const userData = userDoc.data();
+        if (userData.isBlacklisted) {
+          toast.error("Your account has been suspended by an Admin.");
+          // Instantly sign them out of Firebase so they can't bypass the UI
+          await auth.signOut(); 
+          return; // Stop running any more code
+        }
         
         // 2. If they have a role, send them to their dashboard
         if (userData.role === 'donor') {
