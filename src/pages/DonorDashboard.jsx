@@ -111,7 +111,8 @@ export default function DonorDashboard() {
       data.append('image', file);
 
       // Make sure this URL matches your Express backend port
-      const response = await fetch('http://localhost:5000/api/analyze-food', {
+      // In development, it's likely http://localhost:5000/api/analyze-food
+      const response = await fetch('https://sharebite-6m6l.onrender.com/api/analyze-food', {
         method: 'POST',
         body: data,
       });
