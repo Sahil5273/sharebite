@@ -29,3 +29,6 @@ src/firebase/config.js
 
 .env
 
+
+sharebite-frontend/node_modules
+sharebite-frontend/.env

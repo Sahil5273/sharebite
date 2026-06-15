@@ -1,6 +1,6 @@
 // src/pages/DonorDashboard.jsx
 import { useState, useEffect } from 'react';
-import { db, auth } from '../firebase/config'; // We removed storage from here!
+import { db, auth } from '../firebase/config'; 
 import { collection, query, where, onSnapshot, addDoc, doc, getDoc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 import imageCompression from 'browser-image-compression'; 
@@ -14,6 +14,9 @@ export default function DonorDashboard() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [imageFile, setImageFile] = useState(null); 
   
+  // NEW: Loading state for the AI analysis
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  
   const [formData, setFormData] = useState({
     foodName: '',
     quantity: '',
@@ -24,6 +27,7 @@ export default function DonorDashboard() {
     lon: ''  
   });
 
+  // Fetch user profile data to pre-fill phone/address
   useEffect(() => {
     const fetchMyProfileData = async () => {
       const user = auth.currentUser;
@@ -44,6 +48,7 @@ export default function DonorDashboard() {
     fetchMyProfileData();
   }, []);
 
+  // Fetch user's live donations
   useEffect(() => {
     const user = auth.currentUser;
     if (!user) return;
@@ -89,6 +94,53 @@ export default function DonorDashboard() {
     setShowSuggestions(false); 
   };
 
+  // NEW: Handle Image Selection and AI Analysis
+  const handleImageSelectAndAnalyze = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // 1. Save the file so Cloudinary can still upload it later when form is submitted
+    setImageFile(file);
+    
+    // 2. Tell the user AI is working
+    setIsAiLoading(true);
+    const aiToastId = toast.loading("AI is analyzing your food image...");
+
+    try {
+      const data = new FormData();
+      data.append('image', file);
+
+      // Make sure this URL matches your Express backend port
+      const response = await fetch('http://localhost:5000/api/analyze-food', {
+        method: 'POST',
+        body: data,
+      });
+
+      if (!response.ok) throw new Error("Backend failed");
+
+      const aiData = await response.json();
+      
+      // 3. Auto-fill the form with the AI's guesses
+      setFormData(prev => ({
+        ...prev,
+        foodName: aiData.title || prev.foodName,
+        quantity: aiData.quantity || prev.quantity,
+        // Ensure the AI's category exactly matches your dropdown options
+        foodType: ['Fresh Produce', 'Cooked Meal', 'Packaged Food', 'Beverages'].includes(aiData.category) 
+                  ? aiData.category 
+                  : prev.foodType 
+      }));
+
+      toast.success("Form auto-filled by AI!", { id: aiToastId });
+
+    } catch (error) {
+      console.error("AI Analysis failed:", error);
+      toast.error("AI couldn't analyze the image. Please fill details manually.", { id: aiToastId });
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
   const handlePostFood = async (e) => {
     e.preventDefault(); 
     const user = auth.currentUser;
@@ -111,12 +163,9 @@ export default function DonorDashboard() {
 
         toast.loading("Uploading to Cloudinary...", { id: loadingToast });
         
-        // --- NEW CLOUDINARY UPLOAD LOGIC ---
         const cloudinaryData = new FormData();
         cloudinaryData.append("file", compressedFile);
-        
-        // ⚠️ CHANGE THESE TWO LINES TO MATCH YOUR CLOUDINARY ACCOUNT ⚠️
-        cloudinaryData.append("upload_preset", "sharebite_preset"); // <-- Put your preset name here
+        cloudinaryData.append("upload_preset", "sharebite_preset"); 
         const cloudName = "dlyqnzrw7"; 
 
         const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
@@ -125,8 +174,7 @@ export default function DonorDashboard() {
         });
 
         const uploadedImage = await res.json();
-        imageUrl = uploadedImage.secure_url; // We get the new link here!
-        // --- END CLOUDINARY LOGIC ---
+        imageUrl = uploadedImage.secure_url; 
       }
 
       toast.loading("Saving details to Firebase...", { id: loadingToast });
@@ -226,14 +274,25 @@ export default function DonorDashboard() {
               <input required type="tel" value={formData.phoneNumber} onChange={e => setFormData({...formData, phoneNumber: e.target.value})} className="w-full border p-3 rounded bg-gray-50" placeholder="Phone Number for the receiver to call you" />
             </div>
 
+            {/* AI-Powered Image Input block */}
             <div className="md:col-span-1">
-              <label className="block text-gray-700 font-bold mb-2">Food Picture (Optional)</label>
-              <input 
-                type="file" 
-                accept="image/*" 
-                onChange={(e) => setImageFile(e.target.files[0])} 
-                className="w-full border p-2 rounded bg-gray-50" 
-              />
+              <label className="block text-gray-700 font-bold mb-2">
+                Food Picture <span className="text-sm font-normal text-green-600">(AI will auto-fill details!)</span>
+              </label>
+              <div className="relative">
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleImageSelectAndAnalyze}
+                  disabled={isAiLoading}
+                  className={`w-full border p-2 rounded bg-gray-50 ${isAiLoading ? 'opacity-50 cursor-not-allowed' : ''}`} 
+                />
+                {isAiLoading && (
+                  <div className="absolute right-3 top-2 text-green-600 animate-pulse font-bold text-sm">
+                    ✨ AI Processing...
+                  </div>
+                )}
+              </div>
             </div>
 
           </div>

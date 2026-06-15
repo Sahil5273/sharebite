@@ -3,5 +3,6 @@ export const superAdmins = [
   "rishavptn@gmail.com",
   "hostelbitesvitb@gmail.com",
   "vishalsinghbhati@vitbhopal.ac.in",
-  "mrityudaman.23bce10164@vitbhopal.ac.in" // You can easily add more here later!
+  "mrityudaman.23bce10164@vitbhopal.ac.in", // You can easily add more here later!
+  "sahil06030352@gmail.com"
 ];
