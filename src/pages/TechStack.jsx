@@ -1,5 +1,5 @@
 // src/pages/TechStack.jsx
-import { Code, Database, Palette, Smartphone, Zap, MapPin, Shield, Sparkles } from 'lucide-react';
+import { Code, Database, Palette, Smartphone, Zap, MapPin, Shield, Sparkles, Brain, Server } from 'lucide-react';
 
 export default function TechStack() {
   return (
@@ -33,7 +33,7 @@ export default function TechStack() {
             <div className="bg-yellow-100 p-3 rounded-full">
               <Database className="text-yellow-600 w-8 h-8" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-800">Backend & Database</h2>
+            <h2 className="text-2xl font-bold text-gray-800">Database & Auth</h2>
           </div>
           <ul className="list-disc list-inside text-gray-600 space-y-2">
             <li><strong>Firebase Authentication:</strong> Secure Google Sign-in so users don't have to remember passwords.</li>
@@ -42,11 +42,26 @@ export default function TechStack() {
           </ul>
         </div>
 
-        {/* Design Section */}
+        {/* NEW: AI & Microservices Section */}
         <div className="bg-white p-8 rounded-xl shadow border border-gray-100 hover:shadow-lg transition-shadow">
           <div className="flex items-center gap-4 mb-4">
             <div className="bg-purple-100 p-3 rounded-full">
-              <Palette className="text-purple-600 w-8 h-8" />
+              <Brain className="text-purple-600 w-8 h-8" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800">AI & Microservices</h2>
+          </div>
+          <ul className="list-disc list-inside text-gray-600 space-y-2">
+            <li><strong>Node.js & Express:</strong> A standalone backend server deployed on Render to securely process API requests.</li>
+            <li><strong>Google Gemini 3.5 API:</strong> Multimodal AI used to analyze uploaded images and extract food metadata.</li>
+            <li><strong>Cloudinary:</strong> Advanced cloud media pipeline for fast image hosting, processing, and delivery.</li>
+          </ul>
+        </div>
+
+        {/* Design Section */}
+        <div className="bg-white p-8 rounded-xl shadow border border-gray-100 hover:shadow-lg transition-shadow">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="bg-pink-100 p-3 rounded-full">
+              <Palette className="text-pink-600 w-8 h-8" />
             </div>
             <h2 className="text-2xl font-bold text-gray-800">Design & UI</h2>
           </div>
@@ -54,20 +69,6 @@ export default function TechStack() {
             <li><strong>Tailwind CSS:</strong> Used to easily style the website, add colors, and make nice shadow effects.</li>
             <li><strong>SweetAlert2:</strong> Used to build the interactive, highly-styled safety checklist modals.</li>
             <li><strong>React Hot Toast:</strong> Used for the smooth, sliding pop-up notifications.</li>
-          </ul>
-        </div>
-
-        {/* Mobile Section */}
-        <div className="bg-white p-8 rounded-xl shadow border border-gray-100 hover:shadow-lg transition-shadow">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="bg-green-100 p-3 rounded-full">
-              <Smartphone className="text-green-600 w-8 h-8" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-800">Responsive Layout</h2>
-          </div>
-          <ul className="list-disc list-inside text-gray-600 space-y-2">
-            <li><strong>Mobile-First Design:</strong> The code automatically adjusts the screen size so it works perfectly on phones.</li>
-            <li><strong>Dynamic Navigation:</strong> A custom hamburger menu that appears only on smaller screens.</li>
           </ul>
         </div>
       </div>
@@ -98,7 +99,25 @@ export default function TechStack() {
             </div>
           </div>
 
-          {/* Challenge 2: Security & Blacklisting */}
+          {/* NEW: Challenge 2: AI Microservice */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 items-start">
+            <div className="bg-purple-100 p-4 rounded-full flex-shrink-0">
+              <Server className="text-purple-600 w-8 h-8" />
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">AI Data Extraction Pipeline</h3>
+              <div className="mb-3">
+                <span className="font-bold text-red-600 mr-2">The Challenge:</span> 
+                <span className="text-gray-700">Manually typing out food details (category, title, quantity) slows down the donation process. We needed AI to analyze photos, but exposing API keys on the React frontend is a massive security risk.</span>
+              </div>
+              <div>
+                <span className="font-bold text-green-600 mr-2">The Solution:</span> 
+                <span className="text-gray-700">Architected a standalone Node.js/Express microservice. React sends images to this secure server, which communicates with the Gemini 3.5 API using strict prompt engineering to return formatted JSON directly into the frontend form state.</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Challenge 3: Security & Blacklisting */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 items-start">
             <div className="bg-red-100 p-4 rounded-full flex-shrink-0">
               <Shield className="text-red-600 w-8 h-8" />
@@ -116,25 +135,25 @@ export default function TechStack() {
             </div>
           </div>
 
-          {/* Challenge 3: UX Feature */}
+          {/* Challenge 4: UX Feature */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 items-start">
-            <div className="bg-purple-100 p-4 rounded-full flex-shrink-0">
-              <Sparkles className="text-purple-600 w-8 h-8" />
+            <div className="bg-yellow-100 p-4 rounded-full flex-shrink-0">
+              <Sparkles className="text-yellow-600 w-8 h-8" />
             </div>
             <div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">Frictionless Data Entry</h3>
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">Frictionless User Profiles</h3>
               <div className="mb-3">
                 <span className="font-bold text-red-600 mr-2">The Challenge:</span> 
-                <span className="text-gray-700">Donors and Receivers had to manually type their phone number and address every single time they filled out a form, creating a frustrating user experience.</span>
+                <span className="text-gray-700">Donors and Receivers had to manually type their phone number and address every single time they filled out a form.</span>
               </div>
               <div>
                 <span className="font-bold text-green-600 mr-2">The Solution:</span> 
-                <span className="text-gray-700">We built a smart "Autofill" system. Upon loading a dashboard, React securely fetches the logged-in user's profile document and instantly injects their saved contact details into the form state, saving time while still allowing manual edits.</span>
+                <span className="text-gray-700">We built a smart state-management system. Upon loading a dashboard, React securely fetches the logged-in user's profile document and instantly injects their saved contact details into the form state, saving time while allowing manual overrides.</span>
               </div>
             </div>
           </div>
 
-          {/* Challenge 4: LocationIQ integration */}
+          {/* Challenge 5: LocationIQ integration */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 items-start">
             <div className="bg-blue-100 p-4 rounded-full flex-shrink-0">
               <MapPin className="text-blue-600 w-8 h-8" />

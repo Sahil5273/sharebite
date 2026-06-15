@@ -19,7 +19,7 @@ export default function About() {
       <div className="text-center mb-12">
         <h1 className="text-4xl md:text-5xl font-extrabold text-green-700 mb-4">About ShareBite</h1>
         <p className="text-xl text-gray-600 max-w-3xl mx-auto font-medium">
-          A MERN-Firebase Integrated Solution for Surplus Food Redistribution.
+          An AI-Powered, Full-Stack Solution for Surplus Food Redistribution.
         </p>
       </div>
 
@@ -67,8 +67,33 @@ export default function About() {
           </div>
         </div>
       </div>
+
+      {/* NEW: Tech Innovations Section */}
+      <div className="bg-white p-8 rounded-2xl shadow-md border border-gray-100 mb-10">
+        <h2 className="text-3xl font-bold text-gray-800 mb-8 border-b pb-4 text-center md:text-left">Tech Innovations</h2>
+        
+        <div className="grid md:grid-cols-3 gap-8">
+          <div className="bg-purple-50 p-6 rounded-xl border border-purple-100 flex flex-col items-center text-center transition-transform hover:-translate-y-1">
+            <div className="text-5xl mb-4">🧠</div>
+            <h3 className="text-xl font-bold text-purple-800 mb-2">AI Auto-Fill</h3>
+            <p className="text-gray-700">Powered by a custom Node.js microservice and the Gemini API to instantly extract metadata from food images.</p>
+          </div>
+          
+          <div className="bg-teal-50 p-6 rounded-xl border border-teal-100 flex flex-col items-center text-center transition-transform hover:-translate-y-1">
+            <div className="text-5xl mb-4">📍</div>
+            <h3 className="text-xl font-bold text-teal-800 mb-2">Live Mapping</h3>
+            <p className="text-gray-700">Integrated with the LocationIQ API to dynamically geocode pick-up locations and map real-time routes.</p>
+          </div>
+
+          <div className="bg-amber-50 p-6 rounded-xl border border-amber-100 flex flex-col items-center text-center transition-transform hover:-translate-y-1">
+            <div className="text-5xl mb-4">⚡</div>
+            <h3 className="text-xl font-bold text-amber-800 mb-2">Real-Time Sync</h3>
+            <p className="text-gray-700">Built on Firebase Firestore with strict Role-Based Access Control and DB transactions to manage live feeds safely.</p>
+          </div>
+        </div>
+      </div>
       
-      {/* --- ADD THE SUPERVISOR SECTION HERE --- */}
+      {/* Project Supervisor Section */}
       <div className="bg-blue-50 p-8 rounded-2xl shadow-md border border-blue-100 mb-10">
         <h2 className="text-3xl font-bold text-blue-900 mb-6 border-b border-blue-200 pb-4 text-center md:text-left">
           Project Supervisor
@@ -84,7 +109,6 @@ export default function About() {
           </div>
         </div>
       </div>
-      {/* --- END OF SUPERVISOR SECTION --- */}
 
       {/* Meet the Team Section */}
       <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
